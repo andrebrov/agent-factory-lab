@@ -81,7 +81,7 @@ def test_bubblewrap() -> dict:
 
 
 def test_egress_allowlist() -> dict:
-    """Check if iptables is available for egress control."""
+    """Probe whether iptables rules can be listed; do not enforce egress."""
     try:
         r = subprocess.run(["sudo", "iptables", "-L", "-n"], capture_output=True, text=True, timeout=5)
         has_iptables = r.returncode == 0
@@ -92,7 +92,7 @@ def test_egress_allowlist() -> dict:
     return {
         "iptables_available": has_iptables,
         "allowlist": allowlist,
-        "enforcement": "real" if has_iptables else "protocol_only",
+        "enforcement": "protocol_only",
     }
 
 
@@ -167,9 +167,9 @@ def main():
           + (f" ({bwrap['startup_sec']*1000:.1f}ms)" if bwrap["works"] else ""))
 
     egress = test_egress_allowlist()
-    status = "REAL" if egress["iptables_available"] else "PROTOCOL"
+    status = "PROTOCOL"
     print(f"  [{status:<11}] Egress allowlist: "
-          f"iptables={'yes' if egress['iptables_available'] else 'no'}")
+          f"iptables listing={'yes' if egress['iptables_available'] else 'no'}; enforcement not tested")
 
     secrets = test_secret_placeholders()
     print(f"  [{'REAL':<11}] Secret placeholders: "

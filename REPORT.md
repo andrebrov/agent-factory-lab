@@ -618,7 +618,7 @@ steps after a crash.
 | Component | Status | Result |
 |---|---|---|
 | Bubblewrap sandbox | **Real** | Works, 4.6ms startup |
-| Egress allowlist (iptables) | **Real** | Available |
+| Egress allowlist (iptables) | Protocol | Listing probe only; enforcement not implemented or verified |
 | Secret placeholders | **Real** | Works, 0 leaks |
 | Booby-trap scanner | **Real** | Detects fsmonitor |
 | Step-log resume | **Real** | 2/2 steps recovered |
@@ -626,7 +626,8 @@ steps after a crash.
 | gVisor | Protocol | Requires runsc |
 | Firecracker microVM | Protocol | Requires KVM |
 
-5 of 8 components tested with real execution; 3 require additional infrastructure.
+4 of 8 components were tested with real execution; egress enforcement was not
+implemented or verified, and 3 other components require additional infrastructure.
 
 ---
 

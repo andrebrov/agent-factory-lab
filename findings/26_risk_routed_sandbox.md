@@ -30,7 +30,7 @@ All tiers share:
 
 **What can be tested in-sandbox:**
 - Bubblewrap OS sandbox: real execution.
-- Egress allowlist: real iptables rules (if permissions allow).
+- Egress allowlist: protocol only; the experiment checks whether iptables rules can be listed, but does not install or verify enforcement.
 - Host-held secret placeholders: real implementation.
 - Booby-trap scanner: real execution against a crafted repo.
 - Step-log resume: real execution.
