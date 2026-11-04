@@ -53,7 +53,13 @@ class ResumeSemanticsTests(unittest.TestCase):
             self.assertIn("idempoten", text)
             self.assertIn("replay", text)
             self.assertNotIn("provides exactly-once", text)
-            self.assertIn("replay", json.dumps(json.loads(out.read_text())).lower())
+            result = json.loads(out.read_text())
+            self.assertIn("replay", json.dumps(result).lower())
+            self.assertIn("not total crash+resume savings", text)
+            self.assertEqual(result["fresh_run_tokens"], 18000)
+            self.assertEqual(result["crash_resume_tokens"], 18000)
+            self.assertEqual(result["tokens_saved"], 10500)
+            self.assertEqual(result["tokens_saved_pct"], 58.33)
 
 
 if __name__ == "__main__":

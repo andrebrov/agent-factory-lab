@@ -26,7 +26,7 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Bubblewrap sandbox** | **6/6 tests pass**, 3.4ms overhead | Real (bwrap) |
 | **Booby-trap scanner** | **8/8 threats detected**, all critical neutralized | Real (git) |
 | **Secret placeholders** | **0 secrets leaked** to sandbox | Real |
-| **Step-log resume** | **58% modeled tokens avoided**; retries may replay effects, requiring idempotency or deduplication | Local log, simulated crash |
+| **Step-log resume** | **58% of fresh-run tokens represent completed steps skipped on resume**, not total crash+resume savings; retries may replay effects, requiring idempotency or deduplication | Local log, simulated crash |
 | **Snapshot/restore** | Sub-50ms restore for 20MB state | Real (filesystem) |
 | Per-second VM billing | 94% savings vs hourly | Estimated |
 | Risk-routed sandbox | 5/8 components real-tested | Mixed |
