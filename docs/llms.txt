@@ -20,7 +20,7 @@ Additional real measurements (batch 3 — sandboxing):
 - Bubblewrap OS sandbox: 6/6 tests pass, 3.4ms overhead (bwrap)
 - Booby-trap scanner: 8/8 threats detected, all critical neutralized (git)
 - Host-held secret placeholders: 0 secrets leaked to sandbox
-- Step-log durable harness: 58% tokens saved on crash recovery
+- Step-log resume: completed steps skipped on resume represent 58% of modeled fresh-run tokens, not total crash+resume savings; retries can replay effects, requiring idempotency or external deduplication (not exactly-once)
 - Snapshot/restore: sub-50ms restore for 20MB state (filesystem)
 - Risk-routed sandbox: 5/8 components real-tested
 

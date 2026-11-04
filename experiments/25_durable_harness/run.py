@@ -3,11 +3,14 @@
 Experiment 25: Durable Harness — Step-Log Resume After Crash
 ===============================================================
 
-Implements a step-log based durable execution harness. Simulates a
-crash mid-workflow and measures recovery: steps replayed vs skipped,
-time saved, cost savings from not re-executing completed steps.
+Demonstrates step-log resume using synthetic operations and a simulated
+interruption. Step costs are modeled; elapsed time is local wall-clock time,
+not a measurement of production recovery or actual token consumption.
 
-REAL EXECUTION — step log, crash, and resume are all real.
+The log and resume execute locally; the crash is simulated between steps,
+operations are synthetic, and token costs are estimates. Incomplete steps can
+replay after an effect but before its completion is recorded. Effects must be
+idempotent or protected by external deduplication for safe retries.
 """
 import json
 import os
@@ -18,7 +21,7 @@ from pathlib import Path
 
 
 class StepLog:
-    """Durable step log for crash recovery."""
+    """Simple append-only step log, not a transactional durable store."""
 
     def __init__(self, log_path: str):
         self.log_path = log_path
@@ -27,9 +30,19 @@ class StepLog:
 
     def _load(self):
         if os.path.exists(self.log_path):
-            with open(self.log_path) as f:
-                for line in f:
-                    self.steps.append(json.loads(line))
+            with open(self.log_path, "rb") as f:
+                for number, line in enumerate(f, 1):
+                    try:
+                        if not line.endswith(b"\n"):
+                            raise ValueError("unterminated record")
+                        entry = json.loads(line.decode("utf-8"))
+                        if (not isinstance(entry, dict) or
+                                not isinstance(entry.get("step_id"), str) or
+                                entry.get("status") not in ("started", "completed")):
+                            raise ValueError("invalid record fields")
+                    except ValueError as exc:
+                        raise ValueError(f"Invalid step log {self.log_path}, line {number}: {exc}") from exc
+                    self.steps.append(entry)
 
     def is_completed(self, step_id: str) -> bool:
         return any(s["step_id"] == step_id and s["status"] == "completed" for s in self.steps)
@@ -112,15 +125,18 @@ def run_workflow(log: StepLog, crash_after: int = None) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Experiment 25: Durable Harness")
-    parser.add_argument("--crash-after", type=int, default=4)
+    parser.add_argument("--crash-after", type=int, default=4,
+                        help=f"crash between steps after 1 to {len(WORKFLOW_STEPS) - 1} steps")
     parser.add_argument("--output", type=str, default=None)
     args = parser.parse_args()
+    if not 1 <= args.crash_after < len(WORKFLOW_STEPS):
+        parser.error(f"--crash-after must be between 1 and {len(WORKFLOW_STEPS) - 1}")
 
     print("=" * 65)
     print("EXPERIMENT 25: Durable Harness — Step-Log Resume")
     print("=" * 65)
     print()
-    print("--- REAL EXECUTION ---")
+    print("--- Local log and resume; simulated crash and token costs ---")
     print()
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -148,7 +164,7 @@ def main():
         print(f"  Steps skipped (from log): {result2['skipped']}")
         print(f"  Steps executed (new): {result2['executed']}")
         print(f"  Tokens spent: {result2['total_tokens']:,}")
-        print(f"  Tokens saved (not re-run): {result2['saved_tokens']:,}")
+        print(f"  Skipped-step tokens (not re-run): {result2['saved_tokens']:,}")
         print(f"  Time: {time2:.4f}s")
         print()
 
@@ -168,21 +184,30 @@ def main():
     print(f"  {'Metric':<30} {'Fresh Run':>12} {'Crash+Resume':>12}")
     print(f"  {'-'*56}")
     print(f"  {'Total tokens':<30} {fresh_tokens:>12,} {total_crash_tokens:>12,}")
-    print(f"  {'Tokens saved by resume':<30} {'n/a':>12} {token_savings:>12,}")
-    print(f"  {'Savings %':<30} {'n/a':>12} {token_savings_pct:>11.1f}%")
+    print(f"  {'Skipped-step tokens on resume':<30} {'n/a':>12} {token_savings:>12,}")
+    print(f"  {'Skipped % of fresh tokens':<30} {'n/a':>12} {token_savings_pct:>11.1f}%")
     print(f"  {'Total time':<30} {time_fresh:>12.4f}s {time1 + time2:>12.4f}s")
     print()
-    print(f"Conclusion: The step-log harness saved {token_savings:,} tokens")
-    print(f"({token_savings_pct:.0f}%) by not re-executing {result2['skipped']} completed steps.")
-    print("The pattern provides exactly-once semantics for expensive operations.")
+    print(f"Conclusion: Skipping {result2['skipped']} recorded steps avoided an estimated")
+    print(f"{token_savings:,} tokens ({token_savings_pct:.0f}% of modeled fresh-run tokens) on resume.")
+    print("This is not total crash+resume savings versus a fresh run; totals are shown above.")
+    print("Incomplete steps may replay (at-least-once attempts on retry), including")
+    print("after an effect succeeds but before completion is logged; exactly-once is not guaranteed.")
+    print("Effects require idempotency or external deduplication for safe retries.")
 
     summary = {
         "experiment": "25_durable_harness",
-        "simulated": False,
+        "simulated": True,
+        "semantics": "At-least-once attempts on retry: effects may replay before completion is logged; idempotency or external deduplication is required. No exactly-once guarantee.",
+        "limitations": "Crash is simulated between steps; token costs are estimates. Log writes are not transactional or fsync-protected.",
         "crash_after_step": args.crash_after,
         "total_steps": len(WORKFLOW_STEPS),
         "fresh_run_tokens": fresh_tokens,
         "crash_resume_tokens": total_crash_tokens,
+        "skipped_step_tokens_on_resume": token_savings,
+        "skipped_step_tokens_pct_of_fresh": round(token_savings_pct, 2),
+        "net_tokens_saved_vs_fresh": fresh_tokens - total_crash_tokens,
+        "token_metric_notes": "Estimated costs, not measured tokens. Legacy tokens_saved and tokens_saved_pct alias skipped-step tokens on resume and their percentage of fresh-run tokens; they are not net savings.",
         "tokens_saved": token_savings,
         "tokens_saved_pct": round(token_savings_pct, 2),
         "steps_skipped_on_resume": result2["skipped"],
