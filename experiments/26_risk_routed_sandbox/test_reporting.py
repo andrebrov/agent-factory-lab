@@ -36,12 +36,22 @@ class ReportingTests(unittest.TestCase):
         self.assertIn('not tested', output.lower())
         self.assertNotIn('[REAL       ] Secret', output)
 
-    def test_docker_version_nonzero_and_timeout_are_not_availability_verdicts(self):
-        for outcome in ([MagicMock(returncode=1)], subprocess.TimeoutExpired('docker', 5), FileNotFoundError()):
-            with self.subTest(outcome=outcome):
-                result, output = self.run_main(outcome)
-                self.assertFalse(result['components']['docker']['version_command_succeeded'])
-                self.assertIsNone(result['components']['docker']['available'])
+    def test_docker_probe_outcomes_are_distinct(self):
+        cases = [
+            ([MagicMock(returncode=0)], True, 'success', True, 'succeeded'),
+            ([MagicMock(returncode=1)], True, 'nonzero_exit', False, 'nonzero exit'),
+            (subprocess.TimeoutExpired('docker', 5), True, 'timeout', None, 'timed out'),
+            (FileNotFoundError(), True, 'launch_error', None, 'launch error'),
+            ([], False, 'not_checked', None, 'not checked'),
+        ]
+        for outcome, exists, status, succeeded, text in cases:
+            with self.subTest(status=status):
+                result, output = self.run_main(outcome, docker_exists=exists)
+                docker = result['components']['docker']
+                self.assertEqual(docker['version_probe_status'], status)
+                self.assertIs(docker['version_command_succeeded'], succeeded)
+                self.assertIsNone(docker['available'])
+                self.assertIn(text, output)
                 self.assertIn('container not tested', output)
 
     def test_missing_docker_path_is_not_a_failed_command(self):

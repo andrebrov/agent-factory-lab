@@ -184,15 +184,24 @@ def main():
 
     # This checks only a specific CLI path and version command, not the daemon.
     docker_version_ok = None
+    docker_probe_status = "not_checked"
     if os.path.exists("/usr/bin/docker"):
         try:
             docker_version_ok = subprocess.run(
                 ["/usr/bin/docker", "--version"], capture_output=True, timeout=5
             ).returncode == 0
-        except (OSError, subprocess.TimeoutExpired):
-            docker_version_ok = False
+            docker_probe_status = "success" if docker_version_ok else "nonzero_exit"
+        except subprocess.TimeoutExpired:
+            docker_probe_status = "timeout"
+        except OSError:
+            docker_probe_status = "launch_error"
+    docker_probe_description = {
+        "success": "succeeded", "nonzero_exit": "nonzero exit",
+        "timeout": "timed out", "launch_error": "launch error",
+        "not_checked": "not checked",
+    }[docker_probe_status]
     print(f"  {'[PROTOCOL]':<13} Docker: /usr/bin/docker version command "
-          f"{'not checked' if docker_version_ok is None else 'succeeded' if docker_version_ok else 'failed'}; container not tested")
+          f"{docker_probe_description}; container not tested")
     print(f"  {'[PROTOCOL]':<13} gVisor: availability unknown; not tested")
     print(f"  {'[PROTOCOL]':<13} Firecracker: availability unknown; not tested")
     print()
@@ -209,6 +218,7 @@ def main():
             "booby_trap_scanner": scanner,
             "step_log_resume": step_log,
             "docker": {"available": None, "version_command_succeeded": docker_version_ok,
+                       "version_probe_status": docker_probe_status,
                        "version_probe_path": "/usr/bin/docker", "protocol_only": True},
             "gvisor": {"available": None, "protocol_only": True},
             "firecracker": {"available": None, "protocol_only": True},
