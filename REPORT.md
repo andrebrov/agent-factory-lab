@@ -8,12 +8,13 @@
 
 ## Overview
 
-Twenty-six research findings about coding-agent improvements were collected from
-X (in three batches), documented in `findings/`, and tested via runnable
-experiments. **Fourteen experiments produce real measurements** (token counts,
-execution times, sandboxing, mutation testing, booby-trap scanning); twelve
-use simulated or estimated data (Monte Carlo, cost modeling, protocol-only).
-Every number below is labeled accordingly.
+Twenty-nine research findings about coding-agent improvements were collected from
+X (in four batches), documented in `findings/`, and tested via runnable
+experiments. **Sixteen experiments produce real measurements** (token counts,
+execution times, sandboxing, mutation testing, booby-trap scanning, test
+suites); thirteen use simulated or estimated data (Monte Carlo, cost modeling,
+protocol-only, unverified paper claims). Every number below is labeled
+accordingly.
 
 ---
 
@@ -648,6 +649,68 @@ may vary by environment; no egress, secret-isolation, or microVM guarantee follo
 
 ---
 
+## Batch 4 Experiments (Findings 27–29)
+
+### Experiment 27: TokenEconomizer
+
+**Finding:** External black-box controller that reduces coding-agent token costs
+via micro-skills, tool pruning, and loop guards (Microsoft Research + UC Berkeley).
+
+**Method:** Cloned repo, ran offline test suite. **Status: MIXED — test suite is REAL; cost claims are PAPER-REPORTED, UNVERIFIED**
+
+| Metric | Value |
+|---|---|
+| Offline tests | **643 passed**, 1 failed, 15 skipped (8.4s) |
+| Test suite healthy | Yes (>99.8% pass rate) |
+| Paper-claimed SWE-Bench savings | 18.4–30.9% (277 tasks, 6 repos) |
+| Paper-claimed Web-Bench savings | 16.0–21.2% (102 tasks) |
+| Paper-claimed security savings | 6.4–19.6% (200 tasks) |
+| Paper-claimed Pass@1 | Improved in 4 of 5 settings |
+
+The code is real, the three mechanisms are implemented, and the offline test
+suite passes. The claimed 18-31% cost savings are plausible but **unverified
+by us** — running the full experiments requires Docker + ~200GB disk + API keys.
+
+---
+
+### Experiment 28: Anthropic Message Threads
+
+**Finding:** Server-side conversation retention that reduces upload payload
+and time to first token for long sessions (public beta, Nov 2, 2026).
+
+**Method:** Real tiktoken token counting on 30-turn session payloads.
+**Status: REAL TOKEN COUNTS; TTFT claim is Anthropic's, not measured**
+
+| Metric | Without Threads | With Threads |
+|---|---|---|
+| Total payload tokens (30 turns) | 12,140 | 2,096 |
+| **Payload reduction** | baseline | **82.7%** |
+| TTFT improvement | baseline | ~35% (Anthropic claim) |
+| Token cost | baseline | 0% change (same) |
+
+Message threads are a **latency optimization**, not a cost optimization: the
+model reads the same tokens, but the client uploads 83% less data. Anthropic
+claims ~35% lower median TTFT for 500K–1M-token requests. No API key was
+available for real TTFT measurement; a protocol is provided.
+
+---
+
+### Experiment 29: AGENTS.md Size Check & Repo Root Guard
+
+**Method:** Real file/directory tests. **Status: REAL EXECUTION**
+
+| Test Suite | Passed | Total |
+|---|---|---|
+| Size check (32 KiB limit) | **5** | 5 |
+| Repo root guard | **4** | 4 |
+| **Total** | **9** | **9** |
+
+Both guards work correctly: the size check detects when AGENTS.md + CLAUDE.md
+exceeds 32 KiB, and the root guard detects subdirectories and non-repo paths.
+Both are <1ms and ready for integration.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -665,6 +728,7 @@ may vary by environment; no egress, secret-isolation, or microVM guarantee follo
 11. **Evaluate secret placeholders** — limited synthetic leak checks only (Exp 19)
 12. **Consider step-log resume with idempotent or deduplicated effects** — skipped steps on resume represent 58% of modeled fresh-run tokens, not total crash+resume savings or exactly-once (Exp 25)
 13. **Use filesystem snapshot/restore** — sub-50ms restore for 20MB state (Exp 23)
+14. **Add AGENTS.md size check + repo root guard** — 9/9 tests pass (Exp 29)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -675,6 +739,7 @@ may vary by environment; no egress, secret-isolation, or microVM guarantee follo
 18. **AGENTS.md single source** — eliminates config drift (Exp 14)
 19. **Per-second billing for microVMs** — 94% savings vs hourly (Exp 22)
 20. **Risk-routed sandbox tiers** — design proposal only; routing and integrated policies not tested (Exp 26)
+21. **Enable Anthropic message threads** — 83% payload reduction, ~35% TTFT claim (Exp 28)
 
 ### Longer-Term (design-stage / protocol-only)
 
@@ -684,6 +749,7 @@ may vary by environment; no egress, secret-isolation, or microVM guarantee follo
 24. **Correction-to-skill loop** — framework ready (Exp 13)
 25. **Firecracker/forgerun microVMs** — requires KVM host (Exp 18, 24)
 26. **VM snapshot fork for agent races** — requires vendor APIs (Exp 23)
+27. **Evaluate TokenEconomizer for Gwaihir** — offline tests pass, paper claims 18-31% savings, unverified (Exp 27)
 
 ---
 

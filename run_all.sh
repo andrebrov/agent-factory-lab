@@ -147,8 +147,20 @@ echo "── Experiment 26: Risk-Routed Sandbox ──"
 python3 experiments/26_risk_routed_sandbox/run.py
 echo ""
 
+echo "── Experiment 27: TokenEconomizer ──"
+python3 experiments/27_token_economizer/run.py
+echo ""
+
+echo "── Experiment 28: Message Threads ──"
+python3 experiments/28_message_threads/run.py
+echo ""
+
+echo "── Experiment 29: AGENTS.md Check ──"
+python3 experiments/29_agents_md_check/run.py
+echo ""
+
 echo "=============================================="
-echo "All 26 experiments complete. See results.json"
+echo "All 29 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

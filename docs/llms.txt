@@ -1,10 +1,10 @@
 # Agent Factory Lab
 
-> Open research lab with 26 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
+> Open research lab with 29 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
 
 This site documents research findings and experiment results for improving two AI coding agents: Gwaihir (orchestrator for herdr, a multi-agent coding tool) and Landroval (orchestrator for Rex, a coding factory).
 
-## Key Results (14 real measurements, 12 simulated/estimated)
+## Key Results (16 real measurements, 13 simulated/estimated)
 
 Real measurements:
 - Batched tool calls: 94.5% token reduction, 90% fewer requests (tiktoken)
@@ -23,6 +23,9 @@ Additional real measurements (batch 3 — sandboxing):
 - Step-log resume: completed steps skipped on resume represent 58% of modeled fresh-run tokens, not total crash+resume savings; retries can replay effects, requiring idempotency or external deduplication (not exactly-once)
 - Snapshot/restore: sub-50ms restore for 20MB state (filesystem)
 - Risk-routed sandbox: independent narrow checks only; no integrated routing or security validation
+- TokenEconomizer: 643/644 offline tests pass; paper claims 18-31% cost savings (unverified by us)
+- Anthropic message threads: 82.7% payload reduction over 30 turns (tiktoken); latency optimization, not cost
+- AGENTS.md size check + repo root guard: 9/9 tests pass
 
 Simulated/estimated:
 - Writer/reviewer pipeline: +15pp fix rate, -42% defect escapes (Monte Carlo)

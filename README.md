@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (26 experiments)
+## Headline Results (29 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -30,6 +30,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Snapshot/restore** | Sub-50ms restore for 20MB state | Real (filesystem) |
 | Per-second VM billing | 94% savings vs hourly | Estimated |
 | Risk-routed sandbox | independent narrow checks only; no integrated routing or security validation | Mixed |
+| **TokenEconomizer offline tests** | **643/644 pass**, claims 18-31% savings | Real tests, unverified claims |
+| **Message threads payload** | **82.7% payload reduction** (latency, not cost) | Real (tiktoken) |
+| **AGENTS.md check + root guard** | **9/9 tests pass** | Real |
 
 ## Quick Start
 
@@ -45,7 +48,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          26 research findings (markdown, sourced from X)
+findings/                          29 research findings (markdown, sourced from X)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -74,8 +77,11 @@ experiments/
   24_forgerun_local/               Local microVM architecture (protocol)
   25_durable_harness/              Local step-log resume (simulated crash and costs)
   26_risk_routed_sandbox/          Independent sandbox component checks (mixed)
+  27_token_economizer/             Offline test suite + cost model (mixed)
+  28_message_threads/              Payload reduction model (real tiktoken)
+  29_agents_md_check/              Size check + repo root guard (real)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 26 experiments end-to-end
+run_all.sh                         Run all 29 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 
