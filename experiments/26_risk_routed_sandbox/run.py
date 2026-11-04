@@ -3,15 +3,10 @@
 Experiment 26: Risk-Routed Sandbox (Combined)
 ================================================
 
-Integrates multiple sandboxing techniques and routes tasks to isolation
-tiers by risk level. Tests what's available on this VM:
-- Bubblewrap OS sandbox (real)
-- Egress allowlist concept (real iptables check)
-- Host-held secret placeholders (real)
-- Booby-trap scanner (real)
-- Step-log resume (real)
-
-MIXED — real where infrastructure exists, protocol where not.
+Defines proposed risk tiers and runs independent, narrow component checks.
+It does not implement routing or integrate security controls. The checks do
+not validate egress enforcement, secret isolation, a general scanner, crash
+recovery, or container/microVM isolation.
 """
 import json
 import os
@@ -71,28 +66,32 @@ def test_bubblewrap() -> dict:
         )
         elapsed = time.monotonic() - start
         return {
-            "available": True,
+            "command_status": "succeeded" if r.returncode == 0 else "failed",
             "works": r.returncode == 0,
             "startup_sec": round(elapsed, 4),
             "output": r.stdout.strip(),
         }
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return {"available": False, "works": False, "startup_sec": 0}
+    except FileNotFoundError:
+        return {"command_status": "not_found", "works": None, "startup_sec": None}
+    except subprocess.TimeoutExpired:
+        return {"command_status": "timed_out", "works": None, "startup_sec": None}
 
 
 def test_egress_allowlist() -> dict:
-    """Check if iptables is available for egress control."""
+    """Probe whether iptables rules can be listed; do not enforce egress."""
     try:
         r = subprocess.run(["sudo", "iptables", "-L", "-n"], capture_output=True, text=True, timeout=5)
-        has_iptables = r.returncode == 0
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        has_iptables = False
+        listing_status = "succeeded" if r.returncode == 0 else "failed"
+    except FileNotFoundError:
+        listing_status = "not_found"  # sudo could not be started
+    except subprocess.TimeoutExpired:
+        listing_status = "timed_out"
 
     allowlist = ["pypi.org", "registry.npmjs.org", "github.com", "api.anthropic.com"]
     return {
-        "iptables_available": has_iptables,
+        "iptables_listing_status": listing_status,
         "allowlist": allowlist,
-        "enforcement": "real" if has_iptables else "protocol_only",
+        "enforcement": "protocol_only",
     }
 
 
@@ -161,57 +160,56 @@ def main():
     print("-" * 50)
 
     bwrap = test_bubblewrap()
-    status = "REAL" if bwrap["works"] else "UNAVAILABLE"
+    status = "CHECK PASS" if bwrap["works"] is True else "CHECK FAIL" if bwrap["works"] is False else "UNKNOWN"
     print(f"  [{status:<11}] Bubblewrap sandbox: "
-          f"{'works' if bwrap['works'] else 'not available'}"
+          f"{'works' if bwrap['works'] is True else 'command failed' if bwrap['works'] is False else 'command outcome unknown'}"
           + (f" ({bwrap['startup_sec']*1000:.1f}ms)" if bwrap["works"] else ""))
 
     egress = test_egress_allowlist()
-    status = "REAL" if egress["iptables_available"] else "PROTOCOL"
+    status = "PROTOCOL"
     print(f"  [{status:<11}] Egress allowlist: "
-          f"iptables={'yes' if egress['iptables_available'] else 'no'}")
+          f"iptables listing={egress['iptables_listing_status']}; enforcement not tested")
 
     secrets = test_secret_placeholders()
-    print(f"  [{'REAL':<11}] Secret placeholders: "
+    print(f"  [{'CHECK':<11}] Placeholder substitution (synthetic): "
           f"found={secrets['placeholders_found']}, resolved={secrets['resolution_works']}")
 
     scanner = test_scanner()
-    print(f"  [{'REAL':<11}] Booby-trap scanner: "
+    print(f"  [{'CHECK':<11}] Git fsmonitor config readback: "
           f"fsmonitor_detected={scanner['fsmonitor_detected']}")
 
     step_log = test_step_log_resume()
-    print(f"  [{'REAL':<11}] Step-log resume: "
+    print(f"  [{'CHECK':<11}] Step-log readback: "
           f"recovered={step_log['steps_recovered']}, works={step_log['recovery_works']}")
 
-    docker_avail = subprocess.run(
-        ["docker", "--version"], capture_output=True
-    ).returncode == 0 if os.path.exists("/usr/bin/docker") else False
-    print(f"  [{'REAL' if docker_avail else 'PROTOCOL':<11}] Docker container: "
-          f"{'available' if docker_avail else 'not available'}")
-
-    print(f"  [{'PROTOCOL':<11}] gVisor: requires runsc")
-    print(f"  [{'PROTOCOL':<11}] Firecracker microVM: requires KVM")
+    # This checks only a specific CLI path and version command, not the daemon.
+    docker_version_ok = None
+    docker_probe_status = "not_checked"
+    if os.path.exists("/usr/bin/docker"):
+        try:
+            docker_version_ok = subprocess.run(
+                ["/usr/bin/docker", "--version"], capture_output=True, timeout=5
+            ).returncode == 0
+            docker_probe_status = "success" if docker_version_ok else "nonzero_exit"
+        except subprocess.TimeoutExpired:
+            docker_probe_status = "timeout"
+        except OSError:
+            docker_probe_status = "launch_error"
+    docker_probe_description = {
+        "success": "succeeded", "nonzero_exit": "nonzero exit",
+        "timeout": "timed out", "launch_error": "launch error",
+        "not_checked": "not checked",
+    }[docker_probe_status]
+    print(f"  {'[PROTOCOL]':<13} Docker: /usr/bin/docker version command "
+          f"{docker_probe_description}; container not tested")
+    print(f"  {'[PROTOCOL]':<13} gVisor: availability unknown; not tested")
+    print(f"  {'[PROTOCOL]':<13} Firecracker: availability unknown; not tested")
     print()
-
-    real_count = sum([
-        bwrap["works"],
-        secrets["resolution_works"],
-        scanner["fsmonitor_detected"],
-        step_log["recovery_works"],
-    ])
-    total_components = 7
-
-    print(f"Components tested (real): {real_count}/4 available")
-    print(f"Components protocol-only: {total_components - real_count}/{total_components}")
-    print()
-    print("Conclusion: 4 of 7 sandbox components are testable on this VM.")
-    print("Bubblewrap, secret placeholders, booby-trap scanner, and step-log")
-    print("resume all work correctly. Docker, gVisor, and Firecracker require")
-    print("additional infrastructure; protocols are provided.")
 
     summary = {
         "experiment": "26_risk_routed_sandbox",
         "simulated": False,
+        "scope": "Independent narrow checks only; no integrated routing, egress enforcement, secret isolation, general scanning, crash recovery, or container/microVM isolation validated.",
         "risk_tiers": RISK_TIERS,
         "components": {
             "bubblewrap": bwrap,
@@ -219,12 +217,15 @@ def main():
             "secret_placeholders": secrets,
             "booby_trap_scanner": scanner,
             "step_log_resume": step_log,
-            "docker": {"available": docker_avail},
-            "gvisor": {"available": False, "protocol_only": True},
-            "firecracker": {"available": False, "protocol_only": True},
+            "docker": {"available": None, "version_command_succeeded": docker_version_ok,
+                       "version_probe_status": docker_probe_status,
+                       "version_probe_path": "/usr/bin/docker", "protocol_only": True},
+            "gvisor": {"available": None, "protocol_only": True},
+            "firecracker": {"available": None, "protocol_only": True},
         },
-        "real_components_tested": real_count,
     }
+
+    print("Independent checks only; routing, egress enforcement, secret isolation, general scanning, crash recovery, and container/microVM isolation were not tested.")
 
     out_path = args.output or os.path.join(os.path.dirname(__file__), "results.json")
     with open(out_path, "w") as f:
