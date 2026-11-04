@@ -3,15 +3,10 @@
 Experiment 26: Risk-Routed Sandbox (Combined)
 ================================================
 
-Integrates multiple sandboxing techniques and routes tasks to isolation
-tiers by risk level. Tests what's available on this VM:
-- Bubblewrap OS sandbox (real)
-- Egress allowlist concept (real iptables check)
-- Host-held secret placeholders (real)
-- Booby-trap scanner (real)
-- Step-log resume (real)
-
-MIXED — real where infrastructure exists, protocol where not.
+Defines proposed risk tiers and runs independent, narrow component checks.
+It does not implement routing or integrate security controls. The checks do
+not validate egress enforcement, secret isolation, a general scanner, crash
+recovery, or container/microVM isolation.
 """
 import json
 import os
@@ -161,9 +156,9 @@ def main():
     print("-" * 50)
 
     bwrap = test_bubblewrap()
-    status = "REAL" if bwrap["works"] else "UNAVAILABLE"
+    status = "CHECK PASS" if bwrap["works"] else "CHECK FAIL"
     print(f"  [{status:<11}] Bubblewrap sandbox: "
-          f"{'works' if bwrap['works'] else 'not available'}"
+          f"{'works' if bwrap['works'] else 'command did not succeed'}"
           + (f" ({bwrap['startup_sec']*1000:.1f}ms)" if bwrap["works"] else ""))
 
     egress = test_egress_allowlist()
@@ -172,25 +167,30 @@ def main():
           f"iptables listing={'yes' if egress['iptables_available'] else 'no'}; enforcement not tested")
 
     secrets = test_secret_placeholders()
-    print(f"  [{'REAL':<11}] Secret placeholders: "
+    print(f"  [{'CHECK':<11}] Placeholder substitution (synthetic): "
           f"found={secrets['placeholders_found']}, resolved={secrets['resolution_works']}")
 
     scanner = test_scanner()
-    print(f"  [{'REAL':<11}] Booby-trap scanner: "
+    print(f"  [{'CHECK':<11}] Git fsmonitor config readback: "
           f"fsmonitor_detected={scanner['fsmonitor_detected']}")
 
     step_log = test_step_log_resume()
-    print(f"  [{'REAL':<11}] Step-log resume: "
+    print(f"  [{'CHECK':<11}] Step-log readback: "
           f"recovered={step_log['steps_recovered']}, works={step_log['recovery_works']}")
 
-    docker_avail = subprocess.run(
-        ["docker", "--version"], capture_output=True
-    ).returncode == 0 if os.path.exists("/usr/bin/docker") else False
-    print(f"  {'[PROTOCOL]':<13} Docker container: "
-          f"{'version command available' if docker_avail else 'not available'}; container not tested")
-
-    print(f"  [{'PROTOCOL':<11}] gVisor: requires runsc")
-    print(f"  [{'PROTOCOL':<11}] Firecracker microVM: requires KVM")
+    # This checks only a specific CLI path and version command, not the daemon.
+    docker_version_ok = False
+    if os.path.exists("/usr/bin/docker"):
+        try:
+            docker_version_ok = subprocess.run(
+                ["/usr/bin/docker", "--version"], capture_output=True, timeout=5
+            ).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    print(f"  {'[PROTOCOL]':<13} Docker: /usr/bin/docker version command "
+          f"{'succeeded' if docker_version_ok else 'not successful or not checked'}; container not tested")
+    print(f"  {'[PROTOCOL]':<13} gVisor: availability unknown; not tested")
+    print(f"  {'[PROTOCOL]':<13} Firecracker: availability unknown; not tested")
     print()
 
     real_count = sum([
@@ -202,6 +202,7 @@ def main():
     summary = {
         "experiment": "26_risk_routed_sandbox",
         "simulated": False,
+        "scope": "Independent narrow checks only; no integrated routing, egress enforcement, secret isolation, general scanning, crash recovery, or container/microVM isolation validated.",
         "risk_tiers": RISK_TIERS,
         "components": {
             "bubblewrap": bwrap,
@@ -209,15 +210,16 @@ def main():
             "secret_placeholders": secrets,
             "booby_trap_scanner": scanner,
             "step_log_resume": step_log,
-            "docker": {"available": docker_avail},
-            "gvisor": {"available": False, "protocol_only": True},
-            "firecracker": {"available": False, "protocol_only": True},
+            "docker": {"available": None, "version_command_succeeded": docker_version_ok,
+                       "version_probe_path": "/usr/bin/docker", "protocol_only": True},
+            "gvisor": {"available": None, "protocol_only": True},
+            "firecracker": {"available": None, "protocol_only": True},
         },
-        "real_components_tested": real_count,
+        "real_components_tested": real_count,  # Legacy name: successful narrow checks, not security validation.
     }
 
     print(f"Successful real component checks: {real_count}/{len(summary['components'])}")
-    print("Egress enforcement and container/microVM isolation were not tested.")
+    print("Independent checks only; routing, egress enforcement, secret isolation, general scanning, crash recovery, and container/microVM isolation were not tested.")
 
     out_path = args.output or os.path.join(os.path.dirname(__file__), "results.json")
     with open(out_path, "w") as f:

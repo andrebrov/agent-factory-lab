@@ -28,14 +28,25 @@ All tiers share:
 
 ## Experiment Design
 
-**What can be tested in-sandbox:**
-- Bubblewrap OS sandbox: real execution.
-- Egress allowlist: protocol only; the experiment checks whether iptables rules can be listed, but does not install or verify enforcement.
-- Host-held secret placeholders: real implementation.
-- Booby-trap scanner: real execution against a crafted repo.
-- Step-log resume: real execution.
+The risk tiers above are a proposal, not implemented routing or integrated policy.
+The experiment performs independent checks:
 
-**What requires additional infrastructure:**
-- Docker containers (no Docker on this VM).
-- gVisor, Firecracker, Lizard microVMs.
-- Actual cloud-provider sandbox APIs.
+- Bubblewrap: runs one command, not a security assessment.
+- Egress: attempts to list iptables rules; no enforcement is installed or verified.
+- Secrets: substitutes a synthetic placeholder; no host-held secret or leak test.
+- Scanner: reads back a crafted Git fsmonitor setting, not a general scan.
+- Step log: reads two prewritten IDs, without a crash or actual resume.
+- Docker: checks only `/usr/bin/docker --version` when that path exists;
+  this does not establish daemon or container availability.
+- gVisor and Firecracker: not probed; availability is unknown. Lizard and
+  cloud-provider APIs are also not tested.
+
+The reported historical run had four successful narrow checks out of eight
+component entries. It does not establish integrated routing or security.
+
+JSON compatibility: `real_components_tested` retains its legacy name but counts
+successful narrow checks, not complete components. Docker `available` now means
+container availability and is null (unknown), rather than the old CLI-version
+result; use `version_command_succeeded` for the limited path-specific check.
+gVisor and Firecracker `available` are null rather than false because neither
+was probed. Consumers must handle null rather than treating it as unavailable.

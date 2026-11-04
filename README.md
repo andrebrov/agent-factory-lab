@@ -25,11 +25,11 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | AGENTS.md single source | Eliminates config drift (0 vs 6.5 rule gap) | Simulated |
 | **Bubblewrap sandbox** | **6/6 tests pass**, 3.4ms overhead | Real (bwrap) |
 | **Booby-trap scanner** | **8/8 threats detected**, all critical neutralized | Real (git) |
-| **Secret placeholders** | **0 secrets leaked** to sandbox | Real |
+| **Secret placeholders** | **No leaks detected in synthetic examples** to sandbox | Real |
 | **Step-log resume** | **58% tokens saved** on crash recovery | Real |
 | **Snapshot/restore** | Sub-50ms restore for 20MB state | Real (filesystem) |
 | Per-second VM billing | 94% savings vs hourly | Estimated |
-| Risk-routed sandbox | 5/8 components real-tested | Mixed |
+| Risk-routed sandbox | 4/8 narrow checks succeeded in the reported run; no integrated routing or security validation | Mixed |
 
 ## Quick Start
 
@@ -73,7 +73,7 @@ experiments/
   23_snapshot_restore/             Filesystem checkpoint timing (real)
   24_forgerun_local/               Local microVM architecture (protocol)
   25_durable_harness/              Step-log crash resume (real)
-  26_risk_routed_sandbox/          Combined sandbox integration (mixed)
+  26_risk_routed_sandbox/          Independent sandbox component checks (mixed)
 docs/                              Static site for GitHub Pages (SEO + GEO)
 run_all.sh                         Run all 26 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions

@@ -519,7 +519,7 @@ Bubblewrap adds near-zero overhead. microVMs add 0.1–2.5s, acceptable for task
 | Secrets in resolved code | 3/3 (correct) |
 | All tests passed | **Yes** |
 
-The `${env.secret.X}` pattern keeps secrets off the sandbox filesystem entirely.
+The test checks specific placeholder and scanning examples; it does not establish that secrets can never reach the sandbox filesystem.
 
 ---
 
@@ -613,21 +613,24 @@ steps after a crash.
 
 ### Experiment 26: Risk-Routed Sandbox (Combined)
 
-**Method:** Integration test of all available sandbox components. **Status: MIXED**
+**Method:** Independent component checks plus a proposed tier configuration, not
+an integration test or implemented router. **Status: MIXED**
 
-| Component | Status | Result |
+| Component | Reported check | Scope |
 |---|---|---|
-| Bubblewrap sandbox | **Real** | Works, 4.6ms startup |
-| Egress allowlist (iptables) | Protocol | Listing probe only; enforcement not implemented or verified |
-| Secret placeholders | **Real** | Works, 0 leaks |
-| Booby-trap scanner | **Real** | Detects fsmonitor |
-| Step-log resume | **Real** | 2/2 steps recovered |
-| Docker container | Protocol | Not available |
-| gVisor | Protocol | Requires runsc |
-| Firecracker microVM | Protocol | Requires KVM |
+| Bubblewrap | Command succeeded, 4.6ms startup | One command, not a security assessment |
+| Egress | iptables listing probe | No rules installed or enforcement verified |
+| Secret placeholders | One synthetic substitution succeeded | No host-held secret or leak test |
+| Scanner | Git fsmonitor config readback succeeded | Not a general booby-trap scan |
+| Step log | Two prewritten step IDs read back | No crash or actual resume |
+| Docker | Version/path check only | Container/daemon operation not tested |
+| gVisor | Not probed | Availability unknown |
+| Firecracker | Not probed | Availability unknown |
 
-4 of 8 components were tested with real execution; egress enforcement was not
-implemented or verified, and 3 other components require additional infrastructure.
+In the reported run, 4 of 8 component entries had successful narrow checks;
+this count is not an integrated security or routing result. Docker's version
+check does not establish container availability. These historical results may
+vary by environment; no egress, secret-isolation, or microVM guarantee follows.
 
 ---
 
@@ -645,7 +648,7 @@ implemented or verified, and 3 other components require additional infrastructur
 8. **Run Rex on a remote VM** — 100% session survival (Exp 17)
 9. **Use bubblewrap sandbox for trusted repos** — 3.4ms overhead, 6/6 tests pass (Exp 20)
 10. **Deploy booby-trap scanner** — 8/8 threats detected, all critical neutralized (Exp 21)
-11. **Use host-held secret placeholders** — zero leaked secrets (Exp 19)
+11. **Evaluate secret placeholders** — limited synthetic leak checks only (Exp 19)
 12. **Add step-log durable harness** — 58% token savings on crash recovery (Exp 25)
 13. **Use filesystem snapshot/restore** — sub-50ms restore for 20MB state (Exp 23)
 
@@ -657,7 +660,7 @@ implemented or verified, and 3 other components require additional infrastructur
 17. **Bug priority gate** — 18% token savings, zero missed high-severity (Exp 8)
 18. **AGENTS.md single source** — eliminates config drift (Exp 14)
 19. **Per-second billing for microVMs** — 94% savings vs hourly (Exp 22)
-20. **Risk-routed sandbox tiers** — route by trust level (Exp 26)
+20. **Risk-routed sandbox tiers** — design proposal only; routing and integrated policies not tested (Exp 26)
 
 ### Longer-Term (design-stage / protocol-only)
 
