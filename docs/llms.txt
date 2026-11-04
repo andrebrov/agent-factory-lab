@@ -22,7 +22,7 @@ Additional real measurements (batch 3 — sandboxing):
 - Host-held secret placeholders: no leaks detected in synthetic examples (not a security guarantee)
 - Step-log durable harness: 58% tokens saved on crash recovery
 - Snapshot/restore: sub-50ms restore for 20MB state (filesystem)
-- Risk-routed sandbox: 4/8 narrow checks succeeded in the reported run; no integrated routing or security validation
+- Risk-routed sandbox: independent narrow checks only; no integrated routing or security validation
 
 Simulated/estimated:
 - Writer/reviewer pipeline: +15pp fix rate, -42% defect escapes (Monte Carlo)

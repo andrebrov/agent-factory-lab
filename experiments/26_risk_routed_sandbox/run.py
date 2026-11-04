@@ -66,26 +66,30 @@ def test_bubblewrap() -> dict:
         )
         elapsed = time.monotonic() - start
         return {
-            "available": True,
+            "command_status": "succeeded" if r.returncode == 0 else "failed",
             "works": r.returncode == 0,
             "startup_sec": round(elapsed, 4),
             "output": r.stdout.strip(),
         }
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return {"available": False, "works": False, "startup_sec": 0}
+    except FileNotFoundError:
+        return {"command_status": "not_found", "works": None, "startup_sec": None}
+    except subprocess.TimeoutExpired:
+        return {"command_status": "timed_out", "works": None, "startup_sec": None}
 
 
 def test_egress_allowlist() -> dict:
     """Probe whether iptables rules can be listed; do not enforce egress."""
     try:
         r = subprocess.run(["sudo", "iptables", "-L", "-n"], capture_output=True, text=True, timeout=5)
-        has_iptables = r.returncode == 0
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        has_iptables = False
+        listing_status = "succeeded" if r.returncode == 0 else "failed"
+    except FileNotFoundError:
+        listing_status = "not_found"  # sudo could not be started
+    except subprocess.TimeoutExpired:
+        listing_status = "timed_out"
 
     allowlist = ["pypi.org", "registry.npmjs.org", "github.com", "api.anthropic.com"]
     return {
-        "iptables_available": has_iptables,
+        "iptables_listing_status": listing_status,
         "allowlist": allowlist,
         "enforcement": "protocol_only",
     }
@@ -164,7 +168,7 @@ def main():
     egress = test_egress_allowlist()
     status = "PROTOCOL"
     print(f"  [{status:<11}] Egress allowlist: "
-          f"iptables listing={'yes' if egress['iptables_available'] else 'no'}; enforcement not tested")
+          f"iptables listing={egress['iptables_listing_status']}; enforcement not tested")
 
     secrets = test_secret_placeholders()
     print(f"  [{'CHECK':<11}] Placeholder substitution (synthetic): "

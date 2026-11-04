@@ -29,7 +29,7 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Step-log resume** | **58% tokens saved** on crash recovery | Real |
 | **Snapshot/restore** | Sub-50ms restore for 20MB state | Real (filesystem) |
 | Per-second VM billing | 94% savings vs hourly | Estimated |
-| Risk-routed sandbox | 4/8 narrow checks succeeded in the reported run; no integrated routing or security validation | Mixed |
+| Risk-routed sandbox | independent narrow checks only; no integrated routing or security validation | Mixed |
 
 ## Quick Start
 

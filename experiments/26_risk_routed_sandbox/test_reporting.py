@@ -13,7 +13,7 @@ class ReportingTests(unittest.TestCase):
     def run_main(self, docker_result, docker_exists=True):
         output, handle = io.StringIO(), mock_open()
         with patch.object(experiment, 'test_bubblewrap', return_value={'works': True, 'startup_sec': .01}), \
-             patch.object(experiment, 'test_egress_allowlist', return_value={'iptables_available': False}), \
+             patch.object(experiment, 'test_egress_allowlist', return_value={'iptables_listing_status': 'not_found'}), \
              patch.object(experiment, 'test_secret_placeholders', return_value={'placeholders_found': 1, 'resolution_works': False}), \
              patch.object(experiment, 'test_scanner', return_value={'fsmonitor_detected': True}), \
              patch.object(experiment, 'test_step_log_resume', return_value={'steps_recovered': 0, 'recovery_works': False}), \

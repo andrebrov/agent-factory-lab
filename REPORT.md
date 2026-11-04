@@ -627,6 +627,14 @@ an integration test or implemented router. **Status: MIXED**
 | gVisor | Not probed | Availability unknown |
 | Firecracker | Not probed | Availability unknown |
 
+The experimental JSON schema replaces `iptables_available` with
+`iptables_listing_status` and bubblewrap `available` with `command_status`.
+Statuses are `succeeded`, `failed`, `not_found`, or `timed_out`; `not_found`
+for the listing means the `sudo` command could not be started, not that
+iptables is absent. Bubblewrap `works` is null when its outcome is unknown.
+Consumers of the old fields must migrate; a failed or timed-out probe does not
+establish tool unavailability.
+
 These independent historical checks are not an integrated security or routing
 result. Docker's version check does not establish container availability. Results
 may vary by environment; no egress, secret-isolation, or microVM guarantee follows.
