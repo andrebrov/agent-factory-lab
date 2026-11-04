@@ -8,12 +8,12 @@
 
 ## Overview
 
-Seventeen research findings about coding-agent improvements were collected from
-X (in two batches), documented in `findings/`, and tested via runnable
-experiments. **Eight experiments produce real measurements** (token counts,
-execution times, mutation testing, pytest gating); nine use simulated or
-estimated data (Monte Carlo, cost modeling). Every number below is labeled
-accordingly.
+Twenty-six research findings about coding-agent improvements were collected from
+X (in three batches), documented in `findings/`, and tested via runnable
+experiments. **Fourteen experiments produce real measurements** (token counts,
+execution times, sandboxing, mutation testing, booby-trap scanning); twelve
+use simulated or estimated data (Monte Carlo, cost modeling, protocol-only).
+Every number below is labeled accordingly.
 
 ---
 
@@ -488,10 +488,190 @@ this provides full session durability.
 
 ---
 
+## Batch 3 Experiments (Findings 18–26): Sandboxing
+
+### Experiment 18: Firecracker microVM — Cost Model
+
+**Finding:** One Firecracker microVM per task with host-held credentials.
+
+**Method:** Cost model across 4 isolation tiers. **Status: ESTIMATED**
+
+| Tier | 30s task overhead | Cost/30s task |
+|---|---|---|
+| Bubblewrap | 0.015s (0.1%) | $0 |
+| Docker | 1.8s (6.0%) | $0.00157 |
+| Lizard microVM | 0.8s (2.6%) | $0.00242 |
+| Firecracker cloud | 2.2s (7.2%) | $0.00302 |
+
+Bubblewrap adds near-zero overhead. microVMs add 0.1–2.5s, acceptable for tasks >10s.
+
+---
+
+### Experiment 19: Host-Held Secret Placeholders
+
+**Method:** Real placeholder resolution + leak scanning. **Status: REAL EXECUTION**
+
+| Test | Result |
+|---|---|
+| Placeholders detected | 3/3 |
+| Placeholders resolved | All |
+| Secrets in sandbox code | **0 (none leaked)** |
+| Secrets in resolved code | 3/3 (correct) |
+| All tests passed | **Yes** |
+
+The `${env.secret.X}` pattern keeps secrets off the sandbox filesystem entirely.
+
+---
+
+### Experiment 20: Bubblewrap OS Sandbox
+
+**Method:** Real bubblewrap execution. **Status: REAL EXECUTION**
+
+| Test | Result |
+|---|---|
+| Basic command exec | PASS |
+| Filesystem isolation (/workspace hidden) | PASS |
+| Read-only mount enforcement | PASS |
+| tmpfs write | PASS |
+| Python exec in sandbox | PASS |
+| Avg startup overhead | **3.4ms** |
+| Tests passed | **6/6** |
+
+Bubblewrap provides real OS-level sandboxing with ~3.4ms overhead per invocation.
+
+---
+
+### Experiment 21: Booby-Trap Scanner
+
+**Method:** Real repo with planted threats + scanner + neutralizer. **Status: REAL EXECUTION**
+
+| Metric | Value |
+|---|---|
+| Threats planted | 6 types (8 instances) |
+| Threats detected | **8/8** |
+| Critical/high neutralized | **All** |
+| Remaining (prompt injection) | 2 (flagged for review) |
+
+The scanner detects `core.fsmonitor`, `core.hooksPath`, `core.sshCommand`,
+executable hooks, `.mcp.json` commands, and AGENTS.md/CLAUDE.md prompt injection.
+Critical and high threats are auto-neutralized; medium threats are flagged.
+
+---
+
+### Experiment 22: Lizard microVM — Per-Second Billing
+
+**Method:** Billing model comparison. **Status: ESTIMATED**
+
+| Metric | Value |
+|---|---|
+| Avg savings vs hourly billing | **93.7%** |
+| Savings on a 5s task | 99.8% |
+| Vendor-claimed boot time | 238ms |
+
+Per-second billing dramatically reduces cost for short agent tasks.
+
+---
+
+### Experiment 23: Snapshot/Restore Timing
+
+**Method:** Real filesystem checkpoint + restore + fork. **Status: REAL EXECUTION**
+
+| State Size | Save Time | Restore Time | Verified |
+|---|---|---|---|
+| 0.01 MB (10 files) | 0.004s | 0.002s | OK |
+| 0.49 MB (50 files) | 0.014s | 0.006s | OK |
+| 4.88 MB (100 files) | 0.111s | 0.020s | OK |
+| 19.53 MB (200 files) | 0.409s | 0.050s | OK |
+
+Fork simulation: two instances restored from same snapshot in ~6ms each.
+All restores bit-verified.
+
+---
+
+### Experiment 24: forgerun — Local microVM Architecture
+
+**Method:** Architecture design and test protocol. **Status: PROTOCOL ONLY**
+
+Requires a KVM-capable host. 10-step test protocol documented.
+
+---
+
+### Experiment 25: Durable Harness — Step-Log Resume
+
+**Method:** Real step log, simulated crash, real resume. **Status: REAL EXECUTION**
+
+| Metric | Fresh Run | Crash + Resume |
+|---|---|---|
+| Total tokens | 18,000 | 18,000 |
+| Tokens saved by resume | n/a | **10,500 (58.3%)** |
+| Steps skipped on resume | 0 | 4 |
+
+The step-log harness saved 58% of tokens by not re-executing 4 already-completed
+steps after a crash.
+
+---
+
+### Experiment 26: Risk-Routed Sandbox (Combined)
+
+**Method:** Integration test of all available sandbox components. **Status: MIXED**
+
+| Component | Status | Result |
+|---|---|---|
+| Bubblewrap sandbox | **Real** | Works, 4.6ms startup |
+| Egress allowlist (iptables) | **Real** | Available |
+| Secret placeholders | **Real** | Works, 0 leaks |
+| Booby-trap scanner | **Real** | Detects fsmonitor |
+| Step-log resume | **Real** | 2/2 steps recovered |
+| Docker container | Protocol | Not available |
+| gVisor | Protocol | Requires runsc |
+| Firecracker microVM | Protocol | Requires KVM |
+
+5 of 8 components tested with real execution; 3 require additional infrastructure.
+
+---
+
+## Updated Recommendations
+
+### High-Confidence (backed by real measurements)
+
+1. **Adopt batched tool calling** — 94.5% token reduction (Exp 3)
+2. **Enable prompt caching** — 72% cost savings, break-even turn 2 (Exp 4)
+3. **Add pane management to Rex** — 1.83x speedup (Exp 5)
+4. **Add stop hook to Gwaihir** — blocks premature "done" on buggy code (Exp 10)
+5. **Add mutation check to Gwaihir** — 100% kill rate on sample codebase (Exp 11)
+6. **Use HANDOFF.md for context handoff** — 53% token savings, 100% fact retention (Exp 12)
+7. **Use terse completions** — 95.7% output token reduction (Exp 15)
+8. **Run Rex on a remote VM** — 100% session survival (Exp 17)
+9. **Use bubblewrap sandbox for trusted repos** — 3.4ms overhead, 6/6 tests pass (Exp 20)
+10. **Deploy booby-trap scanner** — 8/8 threats detected, all critical neutralized (Exp 21)
+11. **Use host-held secret placeholders** — zero leaked secrets (Exp 19)
+12. **Add step-log durable harness** — 58% token savings on crash recovery (Exp 25)
+13. **Use filesystem snapshot/restore** — sub-50ms restore for 20MB state (Exp 23)
+
+### Medium-Confidence (backed by cost models and simulations)
+
+14. **Two-tier model routing** — 21% savings (Exp 2)
+15. **Writer/reviewer default pipeline** — +15pp fix rate (Exp 1)
+16. **Agent races for hard tasks** — 60% → 91% success rate at 3x cost (Exp 16)
+17. **Bug priority gate** — 18% token savings, zero missed high-severity (Exp 8)
+18. **AGENTS.md single source** — eliminates config drift (Exp 14)
+19. **Per-second billing for microVMs** — 94% savings vs hourly (Exp 22)
+20. **Risk-routed sandbox tiers** — route by trust level (Exp 26)
+
+### Longer-Term (design-stage / protocol-only)
+
+21. **SuperPlane pattern for Landroval** — state machine + 10-item checklist (Exp 6)
+22. **Reviewer scoring framework** — F1=0.793, ready for real calibration (Exp 9)
+23. **Capped review rounds** — needs harder-bug scenarios (Exp 7)
+24. **Correction-to-skill loop** — framework ready (Exp 13)
+25. **Firecracker/forgerun microVMs** — requires KVM host (Exp 18, 24)
+26. **VM snapshot fork for agent races** — requires vendor APIs (Exp 23)
+
+---
+
 ## What Could Not Be Tested
 
-The following require access to real LLM APIs or to herdr/Rex running on
-Andrei's machine:
+The following require access to real LLM APIs, KVM hosts, or herdr/Rex:
 
 - **Experiments 1, 7, 9, 16:** Whether real LLMs achieve the assumed success
   and catch rates in the simulations.
@@ -502,6 +682,9 @@ Andrei's machine:
   herdr-core's session API.
 - **Experiment 13:** Whether LLM-extracted skills actually reduce future
   correction frequency.
+- **Experiments 18, 24:** Firecracker/forgerun require KVM; protocols provided.
+- **Experiment 22:** Lizard benchmarks require a Lizard account.
+- **Experiment 23:** Real VM memory snapshot requires vendor APIs (Engrams).
 
 Harnesses and protocols for all of these are provided and ready to run once
-API keys or herdr/Rex access are available.
+the required infrastructure or API keys are available.

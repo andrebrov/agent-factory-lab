@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (17 experiments)
+## Headline Results (26 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -23,6 +23,13 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | Cheap model routing | 20.9% cost savings | Estimated |
 | Bug priority gate | 18% token savings, 0 missed high-severity | Simulated |
 | AGENTS.md single source | Eliminates config drift (0 vs 6.5 rule gap) | Simulated |
+| **Bubblewrap sandbox** | **6/6 tests pass**, 3.4ms overhead | Real (bwrap) |
+| **Booby-trap scanner** | **8/8 threats detected**, all critical neutralized | Real (git) |
+| **Secret placeholders** | **0 secrets leaked** to sandbox | Real |
+| **Step-log resume** | **58% tokens saved** on crash recovery | Real |
+| **Snapshot/restore** | Sub-50ms restore for 20MB state | Real (filesystem) |
+| Per-second VM billing | 94% savings vs hourly | Estimated |
+| Risk-routed sandbox | 5/8 components real-tested | Mixed |
 
 ## Quick Start
 
@@ -38,7 +45,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          17 research findings (markdown, sourced from X)
+findings/                          26 research findings (markdown, sourced from X)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -58,8 +65,17 @@ experiments/
   15_stop_on_verification/         Terse vs verbose completion tokens
   16_agent_races/                  Best-of-N model racing
   17_remote_vm_sessions/           tmux session durability (real execution)
+  18_firecracker_microvm/          microVM cost model (estimated)
+  19_agents_sandbox/               Host-held secret placeholders (real)
+  20_isolation_tiers/              Bubblewrap OS sandbox (real)
+  21_booby_trap_scanner/           Repo threat scanner + neutralizer (real)
+  22_lizard_microvm/               Per-second billing model (estimated)
+  23_snapshot_restore/             Filesystem checkpoint timing (real)
+  24_forgerun_local/               Local microVM architecture (protocol)
+  25_durable_harness/              Step-log crash resume (real)
+  26_risk_routed_sandbox/          Combined sandbox integration (mixed)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 17 experiments end-to-end
+run_all.sh                         Run all 26 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

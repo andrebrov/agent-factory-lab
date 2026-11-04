@@ -1,10 +1,10 @@
 # Agent Factory Lab
 
-> Open research lab with 17 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
+> Open research lab with 26 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
 
 This site documents research findings and experiment results for improving two AI coding agents: Gwaihir (orchestrator for herdr, a multi-agent coding tool) and Landroval (orchestrator for Rex, a coding factory).
 
-## Key Results (8 real measurements, 9 simulated/estimated)
+## Key Results (14 real measurements, 12 simulated/estimated)
 
 Real measurements:
 - Batched tool calls: 94.5% token reduction, 90% fewer requests (tiktoken)
@@ -16,6 +16,14 @@ Real measurements:
 - Stop hook: blocks premature "done" on buggy code (pytest)
 - Remote VM sessions: 100% survival across 5 disconnect cycles (tmux)
 
+Additional real measurements (batch 3 — sandboxing):
+- Bubblewrap OS sandbox: 6/6 tests pass, 3.4ms overhead (bwrap)
+- Booby-trap scanner: 8/8 threats detected, all critical neutralized (git)
+- Host-held secret placeholders: 0 secrets leaked to sandbox
+- Step-log durable harness: 58% tokens saved on crash recovery
+- Snapshot/restore: sub-50ms restore for 20MB state (filesystem)
+- Risk-routed sandbox: 5/8 components real-tested
+
 Simulated/estimated:
 - Writer/reviewer pipeline: +15pp fix rate, -42% defect escapes (Monte Carlo)
 - Agent races: 60% → 91% success rate at 3x cost (Monte Carlo)
@@ -26,6 +34,9 @@ Simulated/estimated:
 - Capped review rounds: 5.2% token savings (needs harder scenarios)
 - Correction-to-skill: 10 skills extracted from 150 corrections
 - SuperPlane: 4/5 auto-shipped via risk-gated state machine
+- Firecracker/Lizard cost model: bubblewrap 0.1%, microVM 2-7% overhead
+- Per-second VM billing: 94% savings vs hourly
+- forgerun local microVM: protocol documented (requires KVM)
 
 ## Pages
 

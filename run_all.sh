@@ -105,8 +105,44 @@ echo "── Experiment 17: Remote VM Sessions ──"
 python3 experiments/17_remote_vm_sessions/run.py
 echo ""
 
+echo "── Experiment 18: Firecracker microVM Cost ──"
+python3 experiments/18_firecracker_microvm/run.py
+echo ""
+
+echo "── Experiment 19: Host-Held Secrets ──"
+python3 experiments/19_agents_sandbox/run.py
+echo ""
+
+echo "── Experiment 20: Isolation Tiers (Bubblewrap) ──"
+python3 experiments/20_isolation_tiers/run.py
+echo ""
+
+echo "── Experiment 21: Booby-Trap Scanner ──"
+python3 experiments/21_booby_trap_scanner/run.py
+echo ""
+
+echo "── Experiment 22: Lizard microVM Cost ──"
+python3 experiments/22_lizard_microvm/run.py
+echo ""
+
+echo "── Experiment 23: Snapshot/Restore ──"
+python3 experiments/23_snapshot_restore/run.py
+echo ""
+
+echo "── Experiment 24: forgerun Architecture ──"
+python3 experiments/24_forgerun_local/run.py
+echo ""
+
+echo "── Experiment 25: Durable Harness ──"
+python3 experiments/25_durable_harness/run.py
+echo ""
+
+echo "── Experiment 26: Risk-Routed Sandbox ──"
+python3 experiments/26_risk_routed_sandbox/run.py
+echo ""
+
 echo "=============================================="
-echo "All 17 experiments complete. See results.json"
+echo "All 26 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
