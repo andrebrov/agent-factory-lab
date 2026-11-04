@@ -21,6 +21,12 @@ command output as evidence.
 2. If any check fails, the agent is told to fix the issue, not mark done.
 3. The completion report includes raw command output as evidence.
 
+## Current experiment limitation
+
+Experiment 10 validates only the buggy and fixed pytest fixtures (10 tests each).
+It does not measure reopening frequency, hidden-test performance, typecheck/build
+gating, or general completion reliability. Partial-fix examples are simulated.
+
 ## Experiment Design
 
 **Goal:** Measure reopen rate and hidden-test pass rate with and without the

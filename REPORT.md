@@ -318,8 +318,9 @@ compare models and tune confidence thresholds.
 | Buggy code ("done" claim) | 0 | 10 | **BLOCKED** |
 | Fixed code ("done" claim) | 10 | 0 | **PASSED** |
 
-The stop hook correctly blocks premature completion on buggy code and passes
-on fixed code, reducing the reopen rate from an estimated 35% to 0%.
+The hook blocks the buggy fixture and passes the fixed fixture (10 tests each).
+Reopening frequency was not measured. This finite pytest check does not establish
+general completion reliability or validate typecheck/build gating.
 
 ---
 

@@ -4,7 +4,7 @@ Experiment 10: Stop Hook — Block "Done" Until Checks Pass
 ===========================================================
 
 Runs the sample codebase test suite as a stop hook to gate agent completion.
-Measures reopen rate (how often the hook catches premature "done" signals).
+Observes gating of two finite fixtures; reopening frequency is not measured.
 
 REAL EXECUTION — actually runs pytest against buggy and fixed code.
 """
@@ -13,6 +13,7 @@ import os
 import sys
 import subprocess
 import argparse
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 SAMPLE_DIR = Path(__file__).parent.parent / "sample_codebase"
@@ -28,19 +29,34 @@ def run_checks(codebase_file: str) -> dict:
         shutil.copy(SAMPLE_DIR / codebase_file, os.path.join(tmpdir, "mathlib.py"))
 
         result = subprocess.run(
-            [sys.executable, "-m", "pytest", "test_mathlib.py", "-v", "--tb=no"],
+            [sys.executable, "-m", "pytest", "test_mathlib.py", "-v", "--tb=no",
+             "--junitxml=report.xml"],
             capture_output=True, text=True, cwd=tmpdir,
         )
         output = result.stdout + result.stderr
-        passed = output.count(" PASSED")
-        failed = output.count(" FAILED")
-        return {
-            "exit_code": result.returncode,
-            "passed": passed,
-            "failed": failed,
-            "all_pass": result.returncode == 0,
-            "output_snippet": output.strip()[-200:],
-        }
+        if result.returncode not in (0, 1):
+            raise RuntimeError(f"pytest infrastructure failure (exit {result.returncode}): {output[-200:]}")
+        try:
+            root = ET.parse(Path(tmpdir) / "report.xml").getroot()
+        except (OSError, ET.ParseError) as exc:
+            raise RuntimeError(f"Invalid pytest report: {exc}; {output[-200:]}") from exc
+        if root.tag not in ("testsuites", "testsuite"):
+            raise RuntimeError("Invalid pytest report root")
+        counts = dict(passed=0, failed=0, errors=0, skipped=0)
+        for case in root.iter("testcase"):
+            outcomes = [child.tag for child in case if child.tag in ("failure", "error", "skipped")]
+            if len(outcomes) > 1:
+                raise RuntimeError("Conflicting testcase outcomes")
+            # JUnit failures are executed test failures; errors cover setup/collection.
+            status = {"failure": "failed", "error": "errors", "skipped": "skipped"}.get(
+                outcomes[0], "passed") if outcomes else "passed"
+            counts[status] += 1
+        if (counts["errors"] or counts["skipped"] or not sum(counts.values())
+                or (result.returncode == 0) != (counts["failed"] == 0)):
+            raise RuntimeError(f"Invalid pytest run: {counts}, exit {result.returncode}")
+        return {"exit_code": result.returncode, **counts,
+                "all_pass": result.returncode == 0, "output_snippet": output.strip()[-200:]}
+
 
 
 def main():
@@ -64,6 +80,11 @@ def main():
     print("Scenario B: Agent claims 'done' with FIXED code")
     print("-" * 50)
     fixed_result = run_checks("mathlib_fixed.py")
+    expected = [(buggy_result, (0, 10, 0, 0, 1)), (fixed_result, (10, 0, 0, 0, 0))]
+    for result, control in expected:
+        actual = tuple(result[key] for key in ("passed", "failed", "errors", "skipped", "exit_code"))
+        if actual != control:
+            raise RuntimeError(f"Fixture control mismatch: expected {control}, got {actual}")
     hook_blocked_b = not fixed_result["all_pass"]
     print(f"  Tests passed: {fixed_result['passed']}, failed: {fixed_result['failed']}")
     print(f"  Stop hook verdict: {'BLOCKED — not done' if hook_blocked_b else 'PASSED'}")
@@ -86,15 +107,8 @@ def main():
     print("--- Scenario C is SIMULATED ---")
     print()
 
-    reopen_rate_without_hook = 0.35  # simulated: 35% of "done" signals are premature
-    reopen_rate_with_hook = 0.0 if hook_blocked_a else reopen_rate_without_hook
-
-    print(f"Estimated reopen rate without stop hook: {reopen_rate_without_hook:.0%} (industry estimate)")
-    print(f"Reopen rate with stop hook: {reopen_rate_with_hook:.0%} (all premature 'done' caught)")
-    print()
-    print("Conclusion: The stop hook correctly blocks premature completion on")
-    print("buggy code and passes on fixed code. This eliminates false 'done'")
-    print("signals at the cost of running the test suite on every completion.")
+    print("Conclusion: The hook blocked the buggy fixture and passed the fixed fixture.")
+    print("Reopening frequency was not measured; these fixtures do not establish general completion reliability.")
 
     summary = {
         "experiment": "10_stop_hook",
@@ -109,8 +123,6 @@ def main():
             "tests_failed": fixed_result["failed"],
             "hook_blocked": hook_blocked_b,
         },
-        "reopen_rate_without_hook": reopen_rate_without_hook,
-        "reopen_rate_with_hook": reopen_rate_with_hook,
     }
 
     out_path = args.output or os.path.join(os.path.dirname(__file__), "results.json")
@@ -120,4 +132,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (RuntimeError, OSError) as exc:
+        print(f"Experiment 10 failed: {exc}", file=sys.stderr)
+        sys.exit(1)

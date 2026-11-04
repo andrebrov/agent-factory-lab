@@ -7,6 +7,12 @@ echo "Agent Factory Lab — Running All Experiments"
 echo "=============================================="
 echo ""
 
+# Refuse before any experiment or installation if this interpreter lacks pytest.
+python3 -c "import pytest" 2>/dev/null || {
+    echo "pytest is required. Install it with: python3 -m pip install pytest" >&2
+    exit 1
+}
+
 # Install tiktoken if not already available
 python3 -c "import tiktoken" 2>/dev/null || {
     echo "Installing tiktoken..."
