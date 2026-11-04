@@ -179,26 +179,20 @@ def main():
           f"recovered={step_log['steps_recovered']}, works={step_log['recovery_works']}")
 
     # This checks only a specific CLI path and version command, not the daemon.
-    docker_version_ok = False
+    docker_version_ok = None
     if os.path.exists("/usr/bin/docker"):
         try:
             docker_version_ok = subprocess.run(
                 ["/usr/bin/docker", "--version"], capture_output=True, timeout=5
             ).returncode == 0
         except (OSError, subprocess.TimeoutExpired):
-            pass
+            docker_version_ok = False
     print(f"  {'[PROTOCOL]':<13} Docker: /usr/bin/docker version command "
-          f"{'succeeded' if docker_version_ok else 'not successful or not checked'}; container not tested")
+          f"{'not checked' if docker_version_ok is None else 'succeeded' if docker_version_ok else 'failed'}; container not tested")
     print(f"  {'[PROTOCOL]':<13} gVisor: availability unknown; not tested")
     print(f"  {'[PROTOCOL]':<13} Firecracker: availability unknown; not tested")
     print()
 
-    real_count = sum([
-        bwrap["works"],
-        secrets["resolution_works"],
-        scanner["fsmonitor_detected"],
-        step_log["recovery_works"],
-    ])
     summary = {
         "experiment": "26_risk_routed_sandbox",
         "simulated": False,
@@ -215,10 +209,8 @@ def main():
             "gvisor": {"available": None, "protocol_only": True},
             "firecracker": {"available": None, "protocol_only": True},
         },
-        "real_components_tested": real_count,  # Legacy name: successful narrow checks, not security validation.
     }
 
-    print(f"Successful real component checks: {real_count}/{len(summary['components'])}")
     print("Independent checks only; routing, egress enforcement, secret isolation, general scanning, crash recovery, and container/microVM isolation were not tested.")
 
     out_path = args.output or os.path.join(os.path.dirname(__file__), "results.json")

@@ -8,16 +8,13 @@ Combines findings 18–24 into a unified architecture.
 
 Route tasks to different isolation levels based on risk:
 
-| Risk Level | Isolation | Use Case |
-|---|---|---|
-| Low (own repos, trusted) | OS sandbox (bubblewrap) | Day-to-day coding |
-| Medium (third-party code) | Docker / gVisor container | Dependency installs, untrusted repos |
-| High (parallel races, untrusted) | microVM (Firecracker/Lizard) | Agent races, adversarial inputs |
+| Risk Level | Isolation | Egress | Secrets | Scanner | Use case |
+|---|---|---|---|---|---|
+| Low | bubblewrap | permissive | environment injection | off | Own repos, trusted code |
+| Medium | Docker | allowlist | placeholders | on | Third-party dependencies, unknown repos |
+| High | microVM | blocked | none | on | Agent races on untrusted code |
 
-All tiers share:
-- **Host-held secrets** with placeholder injection.
-- **Egress allowlist** per tier (strictest for high-risk).
-- **Booby-trap scanner** runs before any git operation.
+These are proposed settings, not implemented or validated controls.
 
 ## Proposal for Gwaihir / Landroval
 
@@ -41,12 +38,11 @@ The experiment performs independent checks:
 - gVisor and Firecracker: not probed; availability is unknown. Lizard and
   cloud-provider APIs are also not tested.
 
-The reported historical run had four successful narrow checks out of eight
-component entries. It does not establish integrated routing or security.
+The historical checks are described individually; they do not establish integrated
+routing or security. No aggregate of unlike probes is reported.
 
-JSON compatibility: `real_components_tested` retains its legacy name but counts
-successful narrow checks, not complete components. Docker `available` now means
-container availability and is null (unknown), rather than the old CLI-version
-result; use `version_command_succeeded` for the limited path-specific check.
-gVisor and Firecracker `available` are null rather than false because neither
-was probed. Consumers must handle null rather than treating it as unavailable.
+JSON compatibility: `real_components_tested` has been removed because it counted
+only four selected checks against eight component entries. Docker `available`
+is null (unknown); `version_command_succeeded` is true or false when the command
+was attempted, and null when the path was absent and the command was not checked.
+gVisor and Firecracker `available` are null because neither was probed.

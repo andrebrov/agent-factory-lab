@@ -34,7 +34,7 @@ class EgressReportingTests(unittest.TestCase):
         self.assertIn("PROTOCOL", line)
         self.assertNotIn("REAL", line)
 
-    def test_aggregate_reflects_actual_results_for_all_eight_components(self):
+    def test_no_misleading_aggregate_of_selected_checks(self):
         for works in (False, True):
             with self.subTest(works=works):
                 output = io.StringIO()
@@ -49,8 +49,8 @@ class EgressReportingTests(unittest.TestCase):
                     experiment.main()
                 result = json.loads(''.join(call.args[0] for call in handle().write.call_args_list))
                 self.assertEqual(len(result["components"]), 8)
-                self.assertEqual(result["real_components_tested"], 4 if works else 0)
-                self.assertIn(f"Successful real component checks: {4 if works else 0}/8", output.getvalue())
+                self.assertNotIn("real_components_tested", result)
+                self.assertNotIn("Successful real component checks", output.getvalue())
                 self.assertNotIn("all work correctly", output.getvalue())
                 self.assertNotIn("protocol-only: 7/7", output.getvalue())
 

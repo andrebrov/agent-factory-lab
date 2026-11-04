@@ -627,10 +627,9 @@ an integration test or implemented router. **Status: MIXED**
 | gVisor | Not probed | Availability unknown |
 | Firecracker | Not probed | Availability unknown |
 
-In the reported run, 4 of 8 component entries had successful narrow checks;
-this count is not an integrated security or routing result. Docker's version
-check does not establish container availability. These historical results may
-vary by environment; no egress, secret-isolation, or microVM guarantee follows.
+These independent historical checks are not an integrated security or routing
+result. Docker's version check does not establish container availability. Results
+may vary by environment; no egress, secret-isolation, or microVM guarantee follows.
 
 ---
 
