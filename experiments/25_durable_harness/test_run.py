@@ -37,6 +37,24 @@ class ResumeSemanticsTests(unittest.TestCase):
                     harness.StepLog(str(path))
                 self.assertEqual(path.read_text(), data)
 
+    def test_log_line_endings_and_invalid_utf8(self):
+        record = b'{"step_id":"a","status":"completed"}'
+        for ending in (b'\n', b'\r\n'):
+            with self.subTest(ending=ending), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / 'steps.jsonl'
+                data = record + ending
+                path.write_bytes(data)
+                self.assertTrue(harness.StepLog(str(path)).is_completed('a'))
+                self.assertEqual(path.read_bytes(), data)
+        for bad in (record + b'\r', b'\xff\n'):
+            with self.subTest(bad=bad), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / 'steps.jsonl'
+                data = record + b'\n' + bad
+                path.write_bytes(data)
+                with self.assertRaisesRegex(ValueError, 'line 2'):
+                    harness.StepLog(str(path))
+                self.assertEqual(path.read_bytes(), data)
+
     def test_crash_after_requires_interrupted_workflow(self):
         with tempfile.TemporaryDirectory() as tmp:
             for value in (0, -1, len(harness.WORKFLOW_STEPS), len(harness.WORKFLOW_STEPS) + 1):

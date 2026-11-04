@@ -30,12 +30,12 @@ class StepLog:
 
     def _load(self):
         if os.path.exists(self.log_path):
-            with open(self.log_path) as f:
+            with open(self.log_path, "rb") as f:
                 for number, line in enumerate(f, 1):
                     try:
-                        if not line.endswith("\n"):
+                        if not line.endswith(b"\n"):
                             raise ValueError("unterminated record")
-                        entry = json.loads(line)
+                        entry = json.loads(line.decode("utf-8"))
                         if (not isinstance(entry, dict) or
                                 not isinstance(entry.get("step_id"), str) or
                                 entry.get("status") not in ("started", "completed")):
