@@ -34,6 +34,26 @@ class EgressReportingTests(unittest.TestCase):
         self.assertIn("PROTOCOL", line)
         self.assertNotIn("REAL", line)
 
+    def test_aggregate_reflects_actual_results_for_all_eight_components(self):
+        for works in (False, True):
+            with self.subTest(works=works):
+                output = io.StringIO()
+                handle = mock_open()
+                with patch.object(experiment, "test_bubblewrap", return_value={"works": works, "startup_sec": 0}), \
+                     patch.object(experiment, "test_egress_allowlist", return_value={"iptables_available": True, "enforcement": "protocol_only"}), \
+                     patch.object(experiment, "test_secret_placeholders", return_value={"placeholders_found": 1, "resolution_works": works}), \
+                     patch.object(experiment, "test_scanner", return_value={"fsmonitor_detected": works}), \
+                     patch.object(experiment, "test_step_log_resume", return_value={"steps_recovered": 2, "recovery_works": works}), \
+                     patch.object(experiment.os.path, "exists", return_value=False), \
+                     patch("sys.argv", ["run.py"]), patch("builtins.open", handle), contextlib.redirect_stdout(output):
+                    experiment.main()
+                result = json.loads(''.join(call.args[0] for call in handle().write.call_args_list))
+                self.assertEqual(len(result["components"]), 8)
+                self.assertEqual(result["real_components_tested"], 4 if works else 0)
+                self.assertIn(f"Successful real component checks: {4 if works else 0}/8", output.getvalue())
+                self.assertNotIn("all work correctly", output.getvalue())
+                self.assertNotIn("protocol-only: 7/7", output.getvalue())
+
     def test_unavailable_listing_is_protocol_only(self):
         with patch.object(experiment.subprocess, "run", side_effect=FileNotFoundError):
             result = experiment.test_egress_allowlist()

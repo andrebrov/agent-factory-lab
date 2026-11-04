@@ -186,8 +186,8 @@ def main():
     docker_avail = subprocess.run(
         ["docker", "--version"], capture_output=True
     ).returncode == 0 if os.path.exists("/usr/bin/docker") else False
-    print(f"  [{'REAL' if docker_avail else 'PROTOCOL':<11}] Docker container: "
-          f"{'available' if docker_avail else 'not available'}")
+    print(f"  {'[PROTOCOL]':<13} Docker container: "
+          f"{'version command available' if docker_avail else 'not available'}; container not tested")
 
     print(f"  [{'PROTOCOL':<11}] gVisor: requires runsc")
     print(f"  [{'PROTOCOL':<11}] Firecracker microVM: requires KVM")
@@ -199,16 +199,6 @@ def main():
         scanner["fsmonitor_detected"],
         step_log["recovery_works"],
     ])
-    total_components = 7
-
-    print(f"Components tested (real): {real_count}/4 available")
-    print(f"Components protocol-only: {total_components - real_count}/{total_components}")
-    print()
-    print("Conclusion: 4 of 7 sandbox components are testable on this VM.")
-    print("Bubblewrap, secret placeholders, booby-trap scanner, and step-log")
-    print("resume all work correctly. Docker, gVisor, and Firecracker require")
-    print("additional infrastructure; protocols are provided.")
-
     summary = {
         "experiment": "26_risk_routed_sandbox",
         "simulated": False,
@@ -225,6 +215,9 @@ def main():
         },
         "real_components_tested": real_count,
     }
+
+    print(f"Successful real component checks: {real_count}/{len(summary['components'])}")
+    print("Egress enforcement and container/microVM isolation were not tested.")
 
     out_path = args.output or os.path.join(os.path.dirname(__file__), "results.json")
     with open(out_path, "w") as f:
