@@ -2,6 +2,7 @@
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 import venv
@@ -127,6 +128,29 @@ def test_no_pytest_cli_and_runner_refusal(tmp_path):
     assert 'python3 -m pip install pytest' in result.stderr
     assert len(log.read_text().splitlines()) == 1
     assert '-c import pytest' in log.read_text()
+
+
+@pytest.mark.parametrize('event', ['pull_request', 'push'])
+def test_workflow_paths_cover_public_claims(event):
+    # Bound each match by indentation so other events/jobs cannot supply paths.
+    # This guard deliberately requires the workflow's current block-list format.
+    workflow = (ROOT / '.github/workflows/stop-hook.yml').read_text()
+    triggers = re.findall(r'^on:\n((?: +[^\n]*\n|\n)*)', workflow, re.MULTILINE)
+    assert len(triggers) == 1
+    sections = re.findall(
+        rf'^  {event}:\n((?: {{4,}}[^\n]*\n|\n)*)', triggers[0], re.MULTILINE)
+    assert len(sections) == 1
+    filters = re.findall(
+        r'^    paths:\n((?: {6,}[^\n]*\n|\n)*)', sections[0], re.MULTILINE)
+    assert len(filters) == 1
+    paths = set()
+    for line in filters[0].splitlines():
+        entry = re.fullmatch(r"      - '([^']+)'", line)
+        assert entry is not None, f'Unsupported path entry: {line!r}'
+        paths.add(entry.group(1))
+    required = {'REPORT.md', 'docs/index.html', 'docs/llms-full.txt',
+                'findings/10_stop_hook.md'}
+    assert required <= paths, f'{event} paths missing: {sorted(required - paths)}'
 
 
 def test_public_claims():

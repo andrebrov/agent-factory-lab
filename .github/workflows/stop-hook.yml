@@ -8,6 +8,10 @@ on:
       - 'run_all.sh'
       - 'experiments/sample_codebase/**'
       - 'requirements.txt'
+      - 'REPORT.md'
+      - 'docs/index.html'
+      - 'docs/llms-full.txt'
+      - 'findings/10_stop_hook.md'
   push:
     branches: [main, fix/experiment10-stop-hook-controls]
     paths:
@@ -17,6 +21,10 @@ on:
       - 'run_all.sh'
       - 'experiments/sample_codebase/**'
       - 'requirements.txt'
+      - 'REPORT.md'
+      - 'docs/index.html'
+      - 'docs/llms-full.txt'
+      - 'findings/10_stop_hook.md'
   workflow_dispatch:
 permissions:
   contents: read
