@@ -7,7 +7,10 @@ Implements a step-log based durable execution harness. Simulates a
 crash mid-workflow and measures recovery: steps replayed vs skipped,
 time saved, cost savings from not re-executing completed steps.
 
-REAL EXECUTION — step log, crash, and resume are all real.
+The log and resume execute locally; the crash is simulated between steps,
+operations are synthetic, and token costs are estimates. Incomplete steps can
+replay after an effect but before its completion is recorded. Effects must be
+idempotent or protected by external deduplication for safe retries.
 """
 import json
 import os
@@ -18,7 +21,7 @@ from pathlib import Path
 
 
 class StepLog:
-    """Durable step log for crash recovery."""
+    """Simple append-only step log, not a transactional durable store."""
 
     def __init__(self, log_path: str):
         self.log_path = log_path
@@ -120,7 +123,7 @@ def main():
     print("EXPERIMENT 25: Durable Harness — Step-Log Resume")
     print("=" * 65)
     print()
-    print("--- REAL EXECUTION ---")
+    print("--- Local log and resume; simulated crash and token costs ---")
     print()
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -172,13 +175,17 @@ def main():
     print(f"  {'Savings %':<30} {'n/a':>12} {token_savings_pct:>11.1f}%")
     print(f"  {'Total time':<30} {time_fresh:>12.4f}s {time1 + time2:>12.4f}s")
     print()
-    print(f"Conclusion: The step-log harness saved {token_savings:,} tokens")
-    print(f"({token_savings_pct:.0f}%) by not re-executing {result2['skipped']} completed steps.")
-    print("The pattern provides exactly-once semantics for expensive operations.")
+    print(f"Conclusion: Skipping {result2['skipped']} recorded steps avoided an estimated")
+    print(f"{token_savings:,} tokens ({token_savings_pct:.0f}% of modeled fresh-run tokens) on resume.")
+    print("Incomplete steps may replay (at-least-once attempts on retry), including")
+    print("after an effect succeeds but before completion is logged; exactly-once is not guaranteed.")
+    print("Effects require idempotency or external deduplication for safe retries.")
 
     summary = {
         "experiment": "25_durable_harness",
-        "simulated": False,
+        "simulated": True,
+        "semantics": "At-least-once attempts on retry: effects may replay before completion is logged; idempotency or external deduplication is required. No exactly-once guarantee.",
+        "limitations": "Crash is simulated between steps; token costs are estimates. Log writes are not transactional or fsync-protected.",
         "crash_after_step": args.crash_after,
         "total_steps": len(WORKFLOW_STEPS),
         "fresh_run_tokens": fresh_tokens,
