@@ -598,16 +598,22 @@ Requires a KVM-capable host. 10-step test protocol documented.
 
 ### Experiment 25: Durable Harness — Step-Log Resume
 
-**Method:** Real step log, simulated crash, real resume. **Status: REAL EXECUTION**
+**Method:** Local step log and resume, synthetic operations and token costs,
+with a simulated crash between steps; not a process or power-failure test.
 
 | Metric | Fresh Run | Crash + Resume |
 |---|---|---|
 | Total tokens | 18,000 | 18,000 |
-| Tokens saved by resume | n/a | **10,500 (58.3%)** |
+| Skipped-step tokens on resume (% of fresh-run tokens) | n/a | **10,500 (58.3%)** |
 | Steps skipped on resume | 0 | 4 |
 
-The step-log harness saved 58% of tokens by not re-executing 4 already-completed
-steps after a crash.
+The 4 recorded steps skipped on resume represent 10,500 tokens, or 58.3%
+of the modeled fresh-run total. This is avoided re-execution during resume, not
+total savings of crash + resume versus a fresh run: both total 18,000 tokens
+in this model. An effect can replay
+if a crash occurs before its completion is logged: retries are at-least-once,
+not exactly-once. Effects require idempotency or external deduplication. The
+log is not transactional or fsync-protected.
 
 ---
 
@@ -656,7 +662,7 @@ may vary by environment; no egress, secret-isolation, or microVM guarantee follo
 9. **Use bubblewrap sandbox for trusted repos** — 3.4ms overhead, 6/6 tests pass (Exp 20)
 10. **Deploy booby-trap scanner** — 8/8 threats detected, all critical neutralized (Exp 21)
 11. **Evaluate secret placeholders** — limited synthetic leak checks only (Exp 19)
-12. **Add step-log durable harness** — 58% token savings on crash recovery (Exp 25)
+12. **Consider step-log resume with idempotent or deduplicated effects** — skipped steps on resume represent 58% of modeled fresh-run tokens, not total crash+resume savings or exactly-once (Exp 25)
 13. **Use filesystem snapshot/restore** — sub-50ms restore for 20MB state (Exp 23)
 
 ### Medium-Confidence (backed by cost models and simulations)
