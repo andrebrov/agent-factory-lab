@@ -1,0 +1,126 @@
+# Agent Factory Lab — Full Content for LLMs
+
+> Open research lab testing techniques to make AI coding agents faster, cheaper, and more reliable.
+> All numbers below are from actual experiment runs. Each is labeled as real, estimated, or simulated.
+
+## About
+
+Agent Factory Lab is a hands-on research repository for improving two AI coding agents:
+- Gwaihir: orchestrator for herdr, a multi-agent coding tool
+- Landroval: orchestrator for Rex, a coding factory
+
+Findings are collected from X (Twitter), documented with source links, and each has a runnable experiment. The repo includes a sample codebase with 10 seeded Python bugs and a test suite for benchmarking.
+
+## Finding 1: Cross-Model Writer/Reviewer/QA Pipeline
+
+Source: https://x.com/brag_sheet/status/2117474234431869338
+
+Use a multi-agent pipeline where distinct models fill separate roles (writer, reviewer, QA), each in an isolated git worktree. A deterministic risk gate scores changes by lines changed, files touched, and blast radius before deciding to auto-merge or escalate.
+
+Experiment result (SIMULATED — Monte Carlo, 1000 trials × 10 bugs):
+- Single-agent fix rate: 64.2%
+- Pipeline fix rate: 79.2% (+15 percentage points)
+- Defect escapes reduced: 42%
+- Token cost increase: 71%
+- Average review rounds: 1.28
+
+Proposal: Make this Gwaihir's default pipeline. Harness ready for real LLM calls.
+
+## Finding 2: Keep Frontier Models Off the Control Plane
+
+Source: https://x.com/adamhjk/status/2116417623789613265
+
+Route orchestration (status checks, routing, task decomposition) to cheap/fast models. Reserve frontier models for code generation and complex reasoning.
+
+Experiment result (ESTIMATED — real API prices, synthetic 17-step session):
+- All-frontier cost: $1.3808 per session
+- Two-tier cost: $1.0924 per session
+- Savings: $0.2884 (20.9%)
+- Control-plane token share: 28% of input
+
+Using Claude Opus ($15/M input) vs Claude Haiku ($0.25/M input). Sessions with more orchestration could save 50%+.
+
+## Finding 3: Programmatic / Batched Tool Calling
+
+Source: https://x.com/MilanGlow/status/2116089358709370962
+
+Batch many tool calls into a single script instead of issuing them one at a time. Eliminates repeated context window overhead.
+
+Experiment result (REAL — tiktoken cl100k_base token counting):
+- Per-call: 20 requests, 32,981 total tokens
+- Batched: 2 requests, 1,819 total tokens
+- Token reduction: 94.5%
+- Request reduction: 90%
+
+The per-call approach causes quadratic token growth (74 tokens at request 1 → 2,151 at request 20) from re-sending conversation history. Batching eliminates this.
+
+## Finding 4: Server-Side Prompt Caching
+
+Sources: https://x.com/ClaudeDevs/status/2117332449382510884, https://x.com/tokenscost/status/2117638485075206393
+
+Cache the stable prefix (system prompt, tools, early context) and charge cached tokens at a discount. Requires append-only conversation history.
+
+Experiment result (REAL token counts, ESTIMATED costs — tiktoken + Anthropic pricing):
+- Uncached session cost: $0.0274
+- Cached session cost: $0.0076
+- Savings: $0.0198 (72.3%)
+- Cache hit rate: 92.7%
+- Break-even turn: 2
+
+20-turn session with $3/M input, $0.30/M cached, $3.75/M cache write.
+
+## Finding 5: Native Pane/Tab Control & Durable Session Layer
+
+Sources: https://x.com/dani_avila7/status/2116352019564777669, https://x.com/herdrdev/status/2115841099575222765, https://x.com/nicoritschel/status/2116931517415141724
+
+Give agents programmatic control over terminal panes (edit, test, logs in parallel). Pair with durable session persistence for crash recovery.
+
+Experiment result (REAL — tmux execution + JSON checkpoint):
+- Sequential execution: 0.300s average
+- Parallel execution: 0.164s average
+- Speedup: 1.83x
+- Session checkpoint/restore: zero state loss, 0.061s resume time
+
+Pane manager is ~80 lines of Python. Session store is ~40 lines.
+
+## Finding 6: SuperPlane Backlog-to-Ship Pattern
+
+Source: https://x.com/darkofabijan/status/2115037955480048100
+
+Automate the full lifecycle: issue triage → planning → approval → execution → review → merge → deploy.
+
+Experiment result (SIMULATED — state machine with 5 sample issues):
+- 4/5 issues auto-shipped through the pipeline
+- 1/5 escalated to human (high-risk, no tests)
+- Risk gates: low-risk auto-merges, medium-risk requires human merge, high-risk requires human approval
+
+Landroval needs 10 capabilities for the full pattern: issue tracker integration, automatic triage, plan generation, approval gate, code generation, test execution, risk-gated merge, deploy trigger, metrics collection, escalation notifications.
+
+## Recommendations
+
+High-confidence (real measurements):
+1. Adopt batched tool calling: 94.5% token savings
+2. Enable prompt caching: 72% cost savings, break-even at turn 2
+3. Add pane management: 1.83x speedup, trivial implementation
+
+Medium-confidence (cost models):
+4. Two-tier model routing: 21% savings, validate with A/B test
+5. Writer/reviewer default pipeline: +15pp fix rate, calibrate with real LLMs
+
+Longer-term (design-stage):
+6. SuperPlane pattern for Landroval: state machine ready, 10-item checklist
+7. herdr-core session persistence: prototype works, needs API integration
+
+## How to Run
+
+git clone https://github.com/andrebrov/agent-factory-lab.git
+cd agent-factory-lab
+pip install tiktoken pytest
+bash run_all.sh
+
+Each experiment writes results.json and prints a human-readable summary. No API keys needed.
+
+## Source
+
+GitHub: https://github.com/andrebrov/agent-factory-lab
+Website: https://andrebrov.github.io/agent-factory-lab/

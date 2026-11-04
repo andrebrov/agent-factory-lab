@@ -1,0 +1,29 @@
+# Agent Factory Lab
+
+> Open research lab testing techniques to make AI coding agents faster, cheaper, and more reliable.
+
+This site documents research findings and experiment results for improving two AI coding agents: Gwaihir (orchestrator for herdr, a multi-agent coding tool) and Landroval (orchestrator for Rex, a coding factory).
+
+## Key Results
+
+- Batched tool calls: 94.5% token reduction (real measurement via tiktoken)
+- Prompt caching: 72.3% cost savings over 20-turn session (real token counts)
+- Parallel pane execution: 1.83x speedup (real tmux measurement)
+- Writer/reviewer pipeline: +15pp fix rate, -42% defect escapes (Monte Carlo simulation)
+- Cheap model routing: 20.9% cost savings (estimated from public pricing)
+- SuperPlane backlog-to-ship: state machine with risk-gated auto-merge (simulated)
+
+## Pages
+
+- Home: https://andrebrov.github.io/agent-factory-lab/
+- Findings: https://andrebrov.github.io/agent-factory-lab/findings.html
+- Report: https://andrebrov.github.io/agent-factory-lab/report.html
+- FAQ: https://andrebrov.github.io/agent-factory-lab/faq.html
+
+## Full content
+
+For full content see: https://andrebrov.github.io/agent-factory-lab/llms-full.txt
+
+## Source
+
+GitHub: https://github.com/andrebrov/agent-factory-lab

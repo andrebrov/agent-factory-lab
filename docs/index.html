@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Factory Lab — Research for Smarter AI Coding Agents</title>
+  <meta name="description" content="Open research lab testing techniques to make AI coding agents faster and cheaper: batched tool calls (94.5% token savings), prompt caching (72% cost reduction), writer/reviewer pipelines, and more. Real measurements, not hype.">
+  <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Agent Factory Lab — Research for Smarter AI Coding Agents">
+  <meta property="og:description" content="Open research lab testing techniques to make AI coding agents faster and cheaper. Real token-count measurements, cost models, and runnable experiments.">
+  <meta property="og:url" content="https://andrebrov.github.io/agent-factory-lab/">
+  <meta property="og:site_name" content="Agent Factory Lab">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Agent Factory Lab — Research for Smarter AI Coding Agents">
+  <meta name="twitter:description" content="Open research lab: batched tool calls cut tokens 94.5%, prompt caching saves 72%, writer/reviewer pipelines reduce defect escapes 42%. Real measurements.">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- JSON-LD: TechArticle -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Agent Factory Lab — Research for Smarter AI Coding Agents",
+    "description": "Open research lab testing techniques to improve AI coding agents: batched tool calling, prompt caching, writer/reviewer pipelines, cheap-model routing, session persistence, and backlog-to-ship automation.",
+    "url": "https://andrebrov.github.io/agent-factory-lab/",
+    "author": {
+      "@type": "Person",
+      "name": "Andrei Brov",
+      "url": "https://github.com/andrebrov"
+    },
+    "datePublished": "2026-11-04",
+    "keywords": ["AI coding agents", "LLM optimization", "token reduction", "prompt caching", "multi-agent pipeline", "Gwaihir", "Landroval", "herdr", "Rex"],
+    "about": [
+      {"@type": "Thing", "name": "AI coding agent optimization"},
+      {"@type": "Thing", "name": "LLM token cost reduction"},
+      {"@type": "Thing", "name": "Multi-agent code review pipeline"}
+    ]
+  }
+  </script>
+
+  <!-- JSON-LD: Dataset -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "Agent Factory Lab Experiment Data",
+    "description": "Experiment results measuring AI coding agent optimization techniques: token counts via tiktoken, cost models from public API pricing, Monte Carlo simulations of multi-agent pipelines, and real tmux-based execution benchmarks.",
+    "url": "https://andrebrov.github.io/agent-factory-lab/",
+    "license": "https://opensource.org/licenses/MIT",
+    "creator": {
+      "@type": "Person",
+      "name": "Andrei Brov"
+    },
+    "distribution": {
+      "@type": "DataDownload",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://github.com/andrebrov/agent-factory-lab"
+    },
+    "measurementTechnique": [
+      "tiktoken cl100k_base token counting",
+      "Monte Carlo simulation (1000 trials × 10 bugs)",
+      "Public API pricing models",
+      "Real tmux pane execution timing"
+    ]
+  }
+  </script>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a href="./" class="logo">Agent Factory Lab</a>
+    <div class="links">
+      <a href="./" class="active">Home</a>
+      <a href="findings.html">Findings</a>
+      <a href="report.html">Report</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/andrebrov/agent-factory-lab">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+
+  <div class="hero">
+    <h1>Agent Factory Lab</h1>
+    <p class="subtitle">Open research lab testing techniques to make AI coding agents faster, cheaper, and more reliable. Real measurements, not hype.</p>
+    <div class="badges">
+      <span class="badge badge--real">3 real measurements</span>
+      <span class="badge badge--estimated">2 cost estimates</span>
+      <span class="badge badge--simulated">1 simulation</span>
+    </div>
+  </div>
+
+  <section>
+    <h2>Key Results</h2>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Batched Tool Calls</h3>
+        <div class="metric">94.5% fewer tokens</div>
+        <p><span class="badge badge--real">Real (tiktoken)</span></p>
+        <p class="mt-1">Batch 20 file operations into one script instead of 20 separate API calls. Reduces requests from 20 to 2 and tokens from 32,981 to 1,819.</p>
+      </div>
+      <div class="card">
+        <h3>Prompt Caching</h3>
+        <div class="metric">72.3% cost savings</div>
+        <p><span class="badge badge--real">Real token counts</span></p>
+        <p class="mt-1">Server-side caching of conversation prefixes over a 20-turn session. Cache hit rate: 92.7%. Break-even at turn 2.</p>
+      </div>
+      <div class="card">
+        <h3>Writer/Reviewer Pipeline</h3>
+        <div class="metric metric--accent">+15pp fix rate</div>
+        <p><span class="badge badge--simulated">Simulated</span></p>
+        <p class="mt-1">Cross-model writer + reviewer pipeline reduces defect escapes by 42% compared to single-agent, at +71% token cost.</p>
+      </div>
+      <div class="card">
+        <h3>Cheap Model Routing</h3>
+        <div class="metric metric--accent">20.9% cost savings</div>
+        <p><span class="badge badge--estimated">Estimated</span></p>
+        <p class="mt-1">Route orchestration to Claude Haiku ($0.25/M) instead of Opus ($15/M). Savings grow with orchestration-heavy sessions.</p>
+      </div>
+      <div class="card">
+        <h3>Parallel Pane Execution</h3>
+        <div class="metric">1.83x speedup</div>
+        <p><span class="badge badge--real">Real (tmux)</span></p>
+        <p class="mt-1">Run edit, test, and log-check in parallel tmux panes. Session checkpoint/restore achieves zero state loss.</p>
+      </div>
+      <div class="card">
+        <h3>SuperPlane Pipeline</h3>
+        <div class="metric metric--accent">4/5 auto-shipped</div>
+        <p><span class="badge badge--simulated">Simulated</span></p>
+        <p class="mt-1">Backlog-to-ship state machine with risk gates: low-risk auto-merges, high-risk escalates to human review.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What This Lab Is</h2>
+    <p>Agent Factory Lab is a hands-on research repository for improving two coding agents:</p>
+    <ul style="margin: 1rem 0 1rem 1.5rem; color: var(--text-muted);">
+      <li><strong style="color:var(--text)">Gwaihir</strong> — orchestrator for the <a href="https://herdr.dev">herdr</a> multi-agent coding tool</li>
+      <li><strong style="color:var(--text)">Landroval</strong> — orchestrator for the Rex coding factory</li>
+    </ul>
+    <p>Findings are collected from X (Twitter), documented with source links, and each one has a <strong>runnable experiment</strong> you can clone and execute. Numbers are honestly labeled as real measurements, estimates, or simulations.</p>
+  </section>
+
+  <section>
+    <h2>Quick Start</h2>
+    <pre><code>git clone https://github.com/andrebrov/agent-factory-lab.git
+cd agent-factory-lab
+pip install tiktoken pytest
+bash run_all.sh</code></pre>
+    <p class="text-muted mt-1">Each experiment writes a <code>results.json</code> and prints a human-readable summary. See <a href="report.html">the full report</a> for consolidated analysis.</p>
+  </section>
+
+  <section>
+    <h2>Measurement Transparency</h2>
+    <table>
+      <thead>
+        <tr><th>Experiment</th><th>Method</th><th>Type</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Batched Tool Calls</td><td>tiktoken cl100k_base on actual files</td><td><span class="badge badge--real">Real</span></td></tr>
+        <tr><td>Prompt Caching</td><td>tiktoken + Anthropic public pricing</td><td><span class="badge badge--real">Real tokens</span></td></tr>
+        <tr><td>Session Layer</td><td>tmux pane execution + JSON checkpoint</td><td><span class="badge badge--real">Real</span></td></tr>
+        <tr><td>Writer/Reviewer</td><td>Monte Carlo, 1000 trials × 10 bugs</td><td><span class="badge badge--simulated">Simulated</span></td></tr>
+        <tr><td>Model Routing</td><td>Public pricing × synthetic trace</td><td><span class="badge badge--estimated">Estimated</span></td></tr>
+        <tr><td>SuperPlane</td><td>State machine with 5 sample issues</td><td><span class="badge badge--simulated">Simulated</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Agent Factory Lab &middot; <a href="https://github.com/andrebrov/agent-factory-lab">Source on GitHub</a> &middot; Research by Andrei Brov</p>
+  </div>
+</footer>
+
+</body>
+</html>

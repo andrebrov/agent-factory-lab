@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research Findings — Agent Factory Lab</title>
+  <meta name="description" content="Six research findings on AI coding agent improvements: writer/reviewer pipelines, cheap-model routing, batched tool calls, prompt caching, session persistence, and backlog-to-ship automation. Each sourced from X with experiment designs.">
+  <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/findings.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Research Findings — Agent Factory Lab">
+  <meta property="og:description" content="Six sourced findings on making AI coding agents faster and cheaper, each with a proposal and experiment design.">
+  <meta property="og:url" content="https://andrebrov.github.io/agent-factory-lab/findings.html">
+  <meta property="og:site_name" content="Agent Factory Lab">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Research Findings — Agent Factory Lab">
+  <meta name="twitter:description" content="Six sourced findings on AI coding agent optimization with proposals for Gwaihir and Landroval.">
+
+  <link rel="stylesheet" href="style.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Research Findings on AI Coding Agent Optimization",
+    "description": "Six research findings sourced from X covering writer/reviewer pipelines, cheap-model routing, batched tool calls, prompt caching, session persistence, and backlog-to-ship automation for AI coding agents.",
+    "url": "https://andrebrov.github.io/agent-factory-lab/findings.html",
+    "author": {"@type": "Person", "name": "Andrei Brov"},
+    "datePublished": "2026-11-04",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Agent Factory Lab",
+      "url": "https://andrebrov.github.io/agent-factory-lab/"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a href="./" class="logo">Agent Factory Lab</a>
+    <div class="links">
+      <a href="./">Home</a>
+      <a href="findings.html" class="active">Findings</a>
+      <a href="report.html">Report</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/andrebrov/agent-factory-lab">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+
+  <h1>Research Findings</h1>
+  <p class="text-muted mb-2">Six techniques for improving AI coding agents, each sourced from X with a proposal and experiment design.</p>
+
+  <section id="finding-1">
+    <h2>1. Cross-Model Writer/Reviewer/QA Pipeline</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/brag_sheet/status/2117474234431869338">@brag_sheet on X</a></p>
+    <h3>Idea</h3>
+    <p>Use a multi-agent pipeline where distinct models fill separate roles — writer, reviewer, and QA — each operating in an isolated git worktree. A risk gate inspects the diff before auto-merging: low-risk changes merge automatically, high-risk changes pause for human review.</p>
+    <h3>Proposal for Gwaihir</h3>
+    <p>Make this pipeline Gwaihir's default execution mode. The writer spawns on a fresh worktree branch, a reviewer checks the diff (approve/request-changes/reject), a QA agent runs the test suite, and a deterministic risk gate (not LLM-based) scores the change by lines changed, files touched, and blast radius.</p>
+    <h3>Experiment</h3>
+    <p>Monte Carlo simulation: 1,000 trials per bug across 10 seeded bugs. <span class="badge badge--simulated">Simulated</span> — harness ready for real LLM calls.</p>
+  </section>
+
+  <section id="finding-2">
+    <h2>2. Keep Frontier Models Off the Control Plane</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/adamhjk/status/2116417623789613265">@adamhjk on X</a></p>
+    <h3>Idea</h3>
+    <p>Most orchestration work — status checks, routing, task decomposition — doesn't need frontier-level intelligence. Route the control plane to cheap/fast models (Claude Haiku, GPT-4o-mini) and reserve frontier models (Claude Opus, GPT-4) for actual code generation and complex reasoning.</p>
+    <h3>Proposal for Gwaihir &amp; Landroval</h3>
+    <p>Two-tier architecture: cheap model handles task routing, status checks, file listing, grep/search. Frontier model handles code writing, complex debugging, architectural decisions. Estimated 60-70% of tokens go to orchestration, so moving them to a 10-20x cheaper model saves 50-65% of total cost.</p>
+    <h3>Experiment</h3>
+    <p>Cost model using public API pricing (Claude Opus vs Haiku) on a synthetic 17-step session. <span class="badge badge--estimated">Estimated</span> — real prices, synthetic trace.</p>
+  </section>
+
+  <section id="finding-3">
+    <h2>3. Programmatic / Batched Tool Calling</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/MilanGlow/status/2116089358709370962">@MilanGlow on X</a></p>
+    <h3>Idea</h3>
+    <p>Instead of issuing tool calls one at a time, batch many operations into a single script. The cited result: ~312 individual tool calls / 3.1M tokens compressed to ~2 requests / 61K tokens.</p>
+    <h3>Proposal for Gwaihir &amp; Rex</h3>
+    <p>When a task involves multiple file edits or shell commands, emit a single script instead of individual tool calls. The herdr runtime already supports shell execution; add a "batch mode" that encourages script emission.</p>
+    <h3>Experiment</h3>
+    <p>Real token counting with tiktoken on 20 file operations. <span class="badge badge--real">Real token counts</span> — 94.5% reduction measured.</p>
+  </section>
+
+  <section id="finding-4">
+    <h2>4. Server-Side Prompt Caching</h2>
+    <p><strong>Sources:</strong>
+      <a href="https://x.com/ClaudeDevs/status/2117332449382510884">@ClaudeDevs</a>,
+      <a href="https://x.com/tokenscost/status/2117638485075206393">@tokenscost</a>
+    </p>
+    <h3>Idea</h3>
+    <p>Long coding sessions accumulate massive context windows. Without caching, every API call re-sends the full history at full price. Prompt caching stores and reuses the stable prefix (system prompt, tools, early context) at a steep discount (often 90% off).</p>
+    <h3>Proposal for Gwaihir &amp; Landroval</h3>
+    <p>Structure prompts for cacheability: stable prefix at the top, append-only message history, never reorder mid-session. Enable Anthropic's cache_control breakpoints or OpenAI's automatic prefix caching.</p>
+    <h3>Experiment</h3>
+    <p>Token counting with tiktoken + Anthropic pricing over 20 simulated turns. <span class="badge badge--real">Real token counts</span> — 72.3% savings, break-even at turn 2.</p>
+  </section>
+
+  <section id="finding-5">
+    <h2>5. Native Pane/Tab Control &amp; Durable Session Layer</h2>
+    <p><strong>Sources:</strong>
+      <a href="https://x.com/dani_avila7/status/2116352019564777669">@dani_avila7</a>,
+      <a href="https://x.com/herdrdev/status/2115841099575222765">@herdrdev</a>,
+      <a href="https://x.com/nicoritschel/status/2116931517415141724">@nicoritschel</a>
+    </p>
+    <h3>Idea</h3>
+    <p>Give the coding agent the ability to programmatically manage terminal panes (edit in one, test in another, monitor logs in a third). Pair with herdr-core's durable session layer for crash recovery and multi-agent state sharing.</p>
+    <h3>Proposal for Rex &amp; Gwaihir</h3>
+    <p>Add a tmux pane-control skill to Rex. Use herdr-core's durable sessions to persist orchestrator state for crash recovery and agent hand-offs.</p>
+    <h3>Experiment</h3>
+    <p>Real tmux pane execution + JSON checkpoint/restore. <span class="badge badge--real">Real execution</span> — 1.83x speedup, zero state loss.</p>
+  </section>
+
+  <section id="finding-6">
+    <h2>6. SuperPlane Backlog-to-Ship Pattern</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/darkofabijan/status/2115037955480048100">@darkofabijan on X</a></p>
+    <h3>Idea</h3>
+    <p>Automate the full lifecycle from backlog item to shipped code: issue triage, planning, execution, review, merge, deploy. The key insight is treating the entire pipeline as automatable, not just the code-writing step.</p>
+    <h3>Proposal for Landroval</h3>
+    <p>Landroval already covers code generation and test execution. Complete the SuperPlane pattern by adding backlog triage, approval gates, deploy triggers, and cycle-time metrics. A 10-item capability checklist is provided.</p>
+    <h3>Experiment</h3>
+    <p>State machine implementation with 5 sample issues. <span class="badge badge--simulated">Simulated</span> — design exercise with runnable code.</p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Agent Factory Lab &middot; <a href="https://github.com/andrebrov/agent-factory-lab">Source on GitHub</a> &middot; Research by Andrei Brov</p>
+  </div>
+</footer>
+
+</body>
+</html>

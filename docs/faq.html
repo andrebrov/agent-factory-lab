@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FAQ — Agent Factory Lab</title>
+  <meta name="description" content="Frequently asked questions about AI coding agent optimization: How much do batched tool calls save? Does prompt caching work? What is a writer/reviewer pipeline? Answers with real data.">
+  <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/faq.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="FAQ — Agent Factory Lab">
+  <meta property="og:description" content="Common questions about AI coding agent optimization answered with real experiment data.">
+  <meta property="og:url" content="https://andrebrov.github.io/agent-factory-lab/faq.html">
+  <meta property="og:site_name" content="Agent Factory Lab">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="FAQ — Agent Factory Lab">
+  <meta name="twitter:description" content="How much do batched tool calls save? Does prompt caching work? Real answers from real experiments.">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- JSON-LD: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How much do batched tool calls reduce token usage for AI coding agents?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In our experiment with 20 file operations measured using tiktoken (cl100k_base encoding), batching all operations into a single script reduced total tokens from 32,981 to 1,819 — a 94.5% reduction. API requests dropped from 20 to 2 (90% reduction). The main savings come from eliminating repeated conversation context that grows quadratically with per-call approaches."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does prompt caching save for long AI coding sessions?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Over a simulated 20-turn coding session with real token counts (tiktoken) and Anthropic pricing, prompt caching saved 72.3% of input costs. The cache hit rate was 92.7%, and the cache write premium was recovered by turn 2. Longer sessions save proportionally more because the growing context is increasingly dominated by cached tokens."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a writer/reviewer pipeline for AI coding agents?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A writer/reviewer pipeline uses separate AI models for writing code and reviewing it, similar to human code review. The writer produces a fix in an isolated git worktree, the reviewer checks it for correctness and style, and a QA step runs tests. A risk gate then decides whether to auto-merge or escalate. In our Monte Carlo simulation (1,000 trials × 10 bugs), this improved fix rate by 15 percentage points and reduced defect escapes by 42%, at 71% higher token cost."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does using cheap models for AI agent orchestration reduce quality?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Our cost model shows routing control-plane tasks (status checks, routing, file listing) to cheap models like Claude Haiku ($0.25/M tokens) while keeping code generation on Claude Opus ($15/M) saves 20.9% of session cost. Quality risk is theoretically low for simple routing tasks, but this needs validation with A/B testing on real coding tasks. Our experiment provides the framework for that validation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can AI coding agents run tasks in parallel using terminal panes?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Our experiment implemented a tmux-based pane manager (about 80 lines of Python) that runs edit, test, and log-monitoring tasks in parallel. Measured over 5 trials, parallel execution achieved a 1.83x speedup over sequential execution. The pane manager is ready for integration with coding agents like Rex."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the SuperPlane pattern for automated coding?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The SuperPlane pattern automates the full lifecycle from backlog item to shipped code: issue triage → planning → approval → execution → review → merge → deploy. Our state machine implementation correctly routes 5 sample issues: low-risk changes auto-merge, medium-risk requires human merge review, high-risk requires human approval, and high-risk without tests escalates immediately. 10 capabilities are needed for full implementation in a coding factory like Landroval."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are the Agent Factory Lab results real or simulated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Three experiments produce real measurements: batched tool calls (94.5% token reduction via tiktoken), prompt caching (72.3% cost savings via tiktoken + pricing), and session layer (1.83x speedup via real tmux execution). Three experiments use simulations or estimates: writer/reviewer pipeline (Monte Carlo), model routing (cost model with real prices), and SuperPlane (state machine). Every number is clearly labeled. No results are fabricated."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What are Gwaihir and Landroval?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Gwaihir is the orchestrator for herdr, a multi-agent coding tool. Landroval is the orchestrator for Rex, a coding factory. Both are AI coding agents being researched in the Agent Factory Lab. Gwaihir manages multi-agent workflows (writer, reviewer, QA agents), while Landroval automates the pipeline from issue to shipped code."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I run the experiments myself?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Clone the repo from GitHub (github.com/andrebrov/agent-factory-lab), install tiktoken and pytest (pip install tiktoken pytest), then run bash run_all.sh. Each experiment writes a results.json in its directory and prints a human-readable summary. No API keys are needed for the current experiments; they use real file measurements and simulations."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a href="./" class="logo">Agent Factory Lab</a>
+    <div class="links">
+      <a href="./">Home</a>
+      <a href="findings.html">Findings</a>
+      <a href="report.html">Report</a>
+      <a href="faq.html" class="active">FAQ</a>
+      <a href="https://github.com/andrebrov/agent-factory-lab">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+
+  <h1>Frequently Asked Questions</h1>
+  <p class="text-muted mb-2">Common questions about AI coding agent optimization, answered with real experiment data.</p>
+
+  <section>
+    <div class="faq-item">
+      <h3>How much do batched tool calls reduce token usage for AI coding agents?</h3>
+      <p>In our experiment with 20 file operations measured using tiktoken (cl100k_base encoding), batching all operations into a single script reduced total tokens from 32,981 to 1,819 — a <strong class="text-green">94.5% reduction</strong>. API requests dropped from 20 to 2 (90% reduction). The main savings come from eliminating repeated conversation context that grows quadratically with per-call approaches. <span class="badge badge--real">Real measurement</span></p>
+    </div>
+
+    <div class="faq-item">
+      <h3>How much does prompt caching save for long AI coding sessions?</h3>
+      <p>Over a simulated 20-turn coding session with real token counts (tiktoken) and Anthropic pricing, prompt caching saved <strong class="text-green">72.3% of input costs</strong>. The cache hit rate was 92.7%, and the cache write premium was recovered by turn 2. Longer sessions save proportionally more. <span class="badge badge--real">Real token counts</span></p>
+    </div>
+
+    <div class="faq-item">
+      <h3>What is a writer/reviewer pipeline for AI coding agents?</h3>
+      <p>A writer/reviewer pipeline uses separate AI models for writing code and reviewing it, similar to human code review. The writer produces a fix in an isolated git worktree, the reviewer checks it, and a QA step runs tests. A risk gate decides whether to auto-merge or escalate. In our Monte Carlo simulation (1,000 trials &times; 10 bugs), this improved fix rate by <strong>15 percentage points</strong> and reduced defect escapes by <strong>42%</strong>, at 71% higher token cost. <span class="badge badge--simulated">Simulated</span></p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Does using cheap models for AI agent orchestration reduce quality?</h3>
+      <p>Our cost model shows routing control-plane tasks to Claude Haiku ($0.25/M tokens) while keeping code generation on Claude Opus ($15/M) saves <strong>20.9%</strong> of session cost. Quality risk is theoretically low for routing tasks, but this needs A/B testing on real coding tasks. Our experiment provides the framework. <span class="badge badge--estimated">Estimated</span></p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Can AI coding agents run tasks in parallel using terminal panes?</h3>
+      <p>Yes. Our tmux-based pane manager (~80 lines of Python) runs edit, test, and log-monitoring in parallel, achieving a <strong class="text-green">1.83x speedup</strong> over sequential execution. Session checkpoint/restore achieves zero state loss across simulated crashes. <span class="badge badge--real">Real measurement</span></p>
+    </div>
+
+    <div class="faq-item">
+      <h3>What is the SuperPlane pattern for automated coding?</h3>
+      <p>SuperPlane automates the full lifecycle: issue &rarr; triage &rarr; plan &rarr; approve &rarr; execute &rarr; review &rarr; merge &rarr; deploy. Our state machine correctly routes issues by risk level: low-risk auto-merges, high-risk escalates, no-test issues are immediately escalated. 10 capabilities are needed for full implementation. <span class="badge badge--simulated">Simulated</span></p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Are these results real or simulated?</h3>
+      <p>Three experiments produce <strong>real measurements</strong>: batched tool calls (94.5% via tiktoken), prompt caching (72.3% via tiktoken + pricing), and session layer (1.83x via real tmux). Three use simulations or estimates: writer/reviewer (Monte Carlo), model routing (cost model), SuperPlane (state machine). Every number is labeled. Nothing is fabricated.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>What are Gwaihir and Landroval?</h3>
+      <p><strong>Gwaihir</strong> is the orchestrator for <a href="https://herdr.dev">herdr</a>, a multi-agent coding tool. <strong>Landroval</strong> is the orchestrator for Rex, a coding factory. Both are AI coding agents being improved through this research lab.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>How do I run the experiments myself?</h3>
+      <p>Clone the repo, install dependencies, and run the script:</p>
+      <pre><code>git clone https://github.com/andrebrov/agent-factory-lab.git
+cd agent-factory-lab
+pip install tiktoken pytest
+bash run_all.sh</code></pre>
+      <p>Each experiment writes <code>results.json</code> and prints a summary. No API keys needed.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Agent Factory Lab &middot; <a href="https://github.com/andrebrov/agent-factory-lab">Source on GitHub</a> &middot; Research by Andrei Brov</p>
+  </div>
+</footer>
+
+</body>
+</html>

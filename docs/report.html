@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Experiment Report — Agent Factory Lab</title>
+  <meta name="description" content="Full experiment report: batched tool calls reduce tokens 94.5% (real measurement), prompt caching saves 72.3% (real tokens), writer/reviewer pipeline adds +15pp fix rate (simulated). Conclusions and next steps for Gwaihir and Landroval.">
+  <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/report.html">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Experiment Report — Agent Factory Lab">
+  <meta property="og:description" content="Full results: 94.5% token reduction from batching, 72% cost savings from caching, 1.83x speedup from parallel panes. Real measurements and honest simulations.">
+  <meta property="og:url" content="https://andrebrov.github.io/agent-factory-lab/report.html">
+  <meta property="og:site_name" content="Agent Factory Lab">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Experiment Report — Agent Factory Lab">
+  <meta name="twitter:description" content="Real measurements: 94.5% fewer tokens (batching), 72% cheaper (caching), 1.83x faster (panes). Full data in the report.">
+
+  <link rel="stylesheet" href="style.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Agent Factory Lab — Full Experiment Report",
+    "description": "Detailed results from six experiments on AI coding agent optimization. Includes real token measurements, cost estimates, and Monte Carlo simulations with conclusions for Gwaihir and Landroval.",
+    "url": "https://andrebrov.github.io/agent-factory-lab/report.html",
+    "author": {"@type": "Person", "name": "Andrei Brov"},
+    "datePublished": "2026-11-04"
+  }
+  </script>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a href="./" class="logo">Agent Factory Lab</a>
+    <div class="links">
+      <a href="./">Home</a>
+      <a href="findings.html">Findings</a>
+      <a href="report.html" class="active">Report</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/andrebrov/agent-factory-lab">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+
+  <h1>Experiment Report</h1>
+  <p class="text-muted">Generated from experiment runs on 2026-11-04. All experiments ran from a clean checkout. Each result comes from the actual <code>results.json</code> produced by that experiment's <code>run.py</code>.</p>
+
+  <section id="exp1">
+    <h2>Experiment 1: Writer/Reviewer Pipeline vs Single-Agent</h2>
+    <p><strong>Method:</strong> Monte Carlo simulation — 1,000 trials per bug, 10 bugs. <span class="badge badge--simulated">Simulated</span></p>
+    <p>Parameters: P(correct)=0.65, P(approve_good)=0.95, P(catch_bad)=0.70</p>
+    <table>
+      <thead><tr><th>Metric</th><th>Single-Agent</th><th>Pipeline</th><th>Delta</th></tr></thead>
+      <tbody>
+        <tr><td>Fix success rate</td><td>64.2%</td><td>79.2%</td><td>+15.0 pp</td></tr>
+        <tr><td>Failed fixes shipped</td><td>3,582</td><td>2,084</td><td>-42%</td></tr>
+        <tr><td>Avg tokens/attempt</td><td>3,001</td><td>5,122</td><td>+71%</td></tr>
+        <tr><td>Avg review rounds</td><td>1</td><td>1.28</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Interpretation:</strong> The reviewer pipeline catches ~42% more bad fixes before they ship, at +71% token cost. Net fix rate improves by 15 percentage points. Numbers are sensitive to probability parameters — the harness accepts CLI flags to explore different assumptions.</p>
+    <p><strong>To validate:</strong> Replace <code>simulate_writer_fix()</code> and <code>simulate_reviewer()</code> with real LLM API calls.</p>
+  </section>
+
+  <section id="exp2">
+    <h2>Experiment 2: Cheap vs Frontier Model Routing</h2>
+    <p><strong>Method:</strong> Cost model, Claude Opus vs Claude Haiku pricing, synthetic 17-step session. <span class="badge badge--estimated">Estimated</span></p>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Session steps</td><td>17 (12 control-plane, 5 data-plane)</td></tr>
+        <tr><td>Control-plane token share</td><td>28% of input</td></tr>
+        <tr><td>All-frontier cost</td><td>$1.3808</td></tr>
+        <tr><td>Two-tier cost</td><td>$1.0924</td></tr>
+        <tr><td><strong>Savings</strong></td><td><strong>$0.2884 (20.9%)</strong></td></tr>
+      </tbody>
+    </table>
+    <p><strong>Interpretation:</strong> Even with only 28% of tokens on the control plane, routing them to Haiku saves ~21%. Sessions with more orchestration overhead (multi-agent coordination) could save 50%+.</p>
+  </section>
+
+  <section id="exp3">
+    <h2>Experiment 3: Batched Script vs Per-Call Tool Use</h2>
+    <p><strong>Method:</strong> Real token counting with tiktoken (cl100k_base / GPT-4o encoding) on 20 file operations. <span class="badge badge--real">Real token counts</span></p>
+    <table>
+      <thead><tr><th>Metric</th><th>Per-Call</th><th>Batched</th><th>Reduction</th></tr></thead>
+      <tbody>
+        <tr><td>API requests</td><td>20</td><td>2</td><td>90%</td></tr>
+        <tr><td>Total tokens</td><td>32,981</td><td>1,819</td><td><strong>94.5%</strong></td></tr>
+      </tbody>
+    </table>
+    <p><strong>Interpretation:</strong> Per-call re-sends growing context with every request (74 tokens at request 1 → 2,151 at request 20). Batching eliminates this quadratic growth. The 94.5% reduction aligns with the cited claim of ~98% for larger sessions.</p>
+    <p><strong>Caveat:</strong> Measures token overhead, not correctness. Whether models produce reliable batch scripts is the open question.</p>
+  </section>
+
+  <section id="exp4">
+    <h2>Experiment 4: Cached vs Uncached Prompt Cost</h2>
+    <p><strong>Method:</strong> Real token counting with tiktoken, Anthropic pricing ($3/M input, $0.30/M cached, $3.75/M cache write). <span class="badge badge--real">Real token counts, estimated costs</span></p>
+    <table>
+      <thead><tr><th>Metric</th><th>Uncached</th><th>Cached</th></tr></thead>
+      <tbody>
+        <tr><td>Total session cost</td><td>$0.0274</td><td>$0.0076</td></tr>
+        <tr><td><strong>Savings</strong></td><td>—</td><td><strong>$0.0198 (72.3%)</strong></td></tr>
+        <tr><td>Cache hit rate</td><td>n/a</td><td>92.7%</td></tr>
+        <tr><td>Break-even turn</td><td>n/a</td><td>Turn 2</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Interpretation:</strong> 72% savings over 20 turns. Cache write premium recovered by turn 2. After that, ~93% of input tokens come from cache at 10x discount. Longer sessions save more.</p>
+  </section>
+
+  <section id="exp5">
+    <h2>Experiment 5: Session Layer &amp; Pane Control</h2>
+    <p><strong>Method:</strong> Real tmux pane management + JSON checkpoint/restore. <span class="badge badge--real">Real execution</span></p>
+    <h3>Part A: Pane Manager</h3>
+    <table>
+      <thead><tr><th>Metric</th><th>Sequential</th><th>Parallel (tmux)</th></tr></thead>
+      <tbody>
+        <tr><td>Avg execution time</td><td>0.300s</td><td>0.164s</td></tr>
+        <tr><td><strong>Speedup</strong></td><td>baseline</td><td><strong>1.83x</strong></td></tr>
+      </tbody>
+    </table>
+    <h3>Part B: Session Checkpoint/Restore</h3>
+    <table>
+      <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Steps before crash</td><td>2 / 5</td></tr>
+        <tr><td>State recovered</td><td>Yes</td></tr>
+        <tr><td>Steps replayed</td><td>3</td></tr>
+        <tr><td>Resume time</td><td>0.061s</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Interpretation:</strong> Multi-pane gives 1.83x speedup for parallelizable workflows. Checkpoint/restore achieves zero state loss. Both are lightweight (~80 and ~40 lines respectively).</p>
+  </section>
+
+  <section id="exp6">
+    <h2>Experiment 6: SuperPlane Backlog-to-Ship</h2>
+    <p><strong>Method:</strong> State machine simulation with 5 sample issues. <span class="badge badge--simulated">Simulated</span></p>
+    <table>
+      <thead><tr><th>Outcome</th><th>Count</th></tr></thead>
+      <tbody>
+        <tr><td>Shipped (auto)</td><td>4</td></tr>
+        <tr><td>Escalated to human</td><td>1</td></tr>
+        <tr><td>Failed</td><td>0</td></tr>
+      </tbody>
+    </table>
+    <p>Low-risk: auto-approve → auto-merge → deploy. High-risk with tests: human approval gate. High-risk without tests: immediate escalation. Landroval needs 10 capabilities to complete the full pattern.</p>
+  </section>
+
+  <section id="conclusions">
+    <h2>Conclusions &amp; Next Steps</h2>
+
+    <h3>High-Confidence (real measurements)</h3>
+    <ol style="margin: 0.75rem 0 1rem 1.5rem; color: var(--text-muted);">
+      <li><strong style="color:var(--text)">Adopt batched tool calling.</strong> 94.5% token reduction is real. Even with a 10-20% retry rate, net positive.</li>
+      <li><strong style="color:var(--text)">Enable prompt caching.</strong> 72% savings, break-even at turn 2. Requires only prompt structure changes.</li>
+      <li><strong style="color:var(--text)">Add pane management to Rex.</strong> 1.83x speedup, trivial implementation (~80 lines).</li>
+    </ol>
+
+    <h3>Medium-Confidence (cost models)</h3>
+    <ol start="4" style="margin: 0.75rem 0 1rem 1.5rem; color: var(--text-muted);">
+      <li><strong style="color:var(--text)">Two-tier model routing.</strong> 21% savings (conservative). Validate with A/B test on 50 real tasks.</li>
+      <li><strong style="color:var(--text)">Writer/reviewer default pipeline.</strong> +15pp fix rate, -42% defect escapes. Calibrate with real LLM calls.</li>
+    </ol>
+
+    <h3>Longer-Term (design-stage)</h3>
+    <ol start="6" style="margin: 0.75rem 0 1rem 1.5rem; color: var(--text-muted);">
+      <li><strong style="color:var(--text)">SuperPlane pattern for Landroval.</strong> State machine ready, 10-item capability checklist provided.</li>
+      <li><strong style="color:var(--text)">herdr-core session persistence.</strong> Prototype works; wire into actual API.</li>
+    </ol>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Agent Factory Lab &middot; <a href="https://github.com/andrebrov/agent-factory-lab">Source on GitHub</a> &middot; Research by Andrei Brov</p>
+  </div>
+</footer>
+
+</body>
+</html>
