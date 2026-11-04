@@ -14,6 +14,47 @@ spec.loader.exec_module(harness)
 
 
 class ResumeSemanticsTests(unittest.TestCase):
+    def test_valid_crash_boundaries_skip_prior_steps(self):
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(harness.time, "sleep"):
+            for value in (1, len(harness.WORKFLOW_STEPS) - 1):
+                out = Path(tmp) / f"{value}.json"
+                with mock.patch("sys.argv", ["run.py", "--crash-after", str(value), "--output", str(out)]), contextlib.redirect_stdout(io.StringIO()):
+                    harness.main()
+                result = json.loads(out.read_text())
+                self.assertEqual(result["steps_skipped_on_resume"], value)
+                self.assertEqual(result["steps_executed_on_resume"], len(harness.WORKFLOW_STEPS) - value)
+                self.assertEqual(result["net_tokens_saved_vs_fresh"], 0)
+
+    def test_invalid_complete_and_unterminated_records_fail_closed(self):
+        for bad in ('not-json\n', '{}\n', '{"step_id":"x","status":"completed"}'):
+            with self.subTest(bad=bad), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / "steps.jsonl"
+                data = '{"step_id":"a","status":"completed"}\n' + bad
+                if bad.endswith('\n'):
+                    data += '{"step_id":"b","status":"completed"}\n'
+                path.write_text(data)
+                with self.assertRaisesRegex(ValueError, "line 2"):
+                    harness.StepLog(str(path))
+                self.assertEqual(path.read_text(), data)
+
+    def test_crash_after_requires_interrupted_workflow(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for value in (0, -1, len(harness.WORKFLOW_STEPS), len(harness.WORKFLOW_STEPS) + 1):
+                with self.subTest(value=value), mock.patch("sys.argv", ["run.py", "--crash-after", str(value), "--output", str(Path(tmp) / "out.json")]), contextlib.redirect_stderr(io.StringIO()):
+                    with self.assertRaises(SystemExit) as error:
+                        harness.main()
+                    self.assertEqual(error.exception.code, 2)
+                    self.assertFalse((Path(tmp) / "out.json").exists())
+
+    def test_torn_log_fails_closed_with_line_number_without_modification(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "steps.jsonl"
+            data = b'{"step_id":"a","status":"completed"}\n{"step_id":"b"'
+            path.write_bytes(data)
+            with self.assertRaisesRegex(ValueError, "line 2"):
+                harness.StepLog(str(path))
+            self.assertEqual(path.read_bytes(), data)
+
     def test_effect_replays_if_crash_precedes_completion_record(self):
         step = {"id": "effect", "cost_tokens": 1, "time_sec": 0}
         effects = []
@@ -60,6 +101,10 @@ class ResumeSemanticsTests(unittest.TestCase):
             self.assertEqual(result["crash_resume_tokens"], 18000)
             self.assertEqual(result["tokens_saved"], 10500)
             self.assertEqual(result["tokens_saved_pct"], 58.33)
+            self.assertEqual(result["skipped_step_tokens_on_resume"], 10500)
+            self.assertEqual(result["skipped_step_tokens_pct_of_fresh"], 58.33)
+            self.assertEqual(result["net_tokens_saved_vs_fresh"], 0)
+            self.assertIn("legacy", result["token_metric_notes"].lower())
 
 
 if __name__ == "__main__":

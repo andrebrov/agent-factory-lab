@@ -29,9 +29,22 @@ applied to coding agents. Key properties:
 
 ## Experiment Design
 
-**What can be tested in-sandbox:** Implement a step-log harness, simulate
-a crash mid-workflow, and measure recovery time and step replay.
+**What is tested in-sandbox:** A local step-log harness simulates an
+interruption between synthetic steps and records skipped and executed steps.
+Elapsed time is local wall-clock time for synthetic sleeps and file operations,
+not production recovery time; token costs are assigned estimates, not measured usage.
 
 The log and resume run locally with synthetic steps and estimated token costs.
 The crash is simulated between steps, not an actual process or power failure;
 the log has no fsync or transactional crash-consistency guarantee.
+`--crash-after` accepts 1 through 9 for the ten-step workflow. Invalid,
+malformed, or unterminated log records stop loading with a line number; no
+record is silently discarded or automatically repaired. Manual reconciliation
+is required before retrying because an effect may already have happened.
+
+The JSON fields `skipped_step_tokens_on_resume` and
+`skipped_step_tokens_pct_of_fresh` describe avoided re-execution during resume,
+not net savings. For compatibility, `tokens_saved` and `tokens_saved_pct`
+remain aliases for those values. `net_tokens_saved_vs_fresh` is fresh-run
+estimated tokens minus total crash-plus-resume estimated tokens (zero in this
+between-step simulation).

@@ -72,7 +72,7 @@ experiments/
   22_lizard_microvm/               Per-second billing model (estimated)
   23_snapshot_restore/             Filesystem checkpoint timing (real)
   24_forgerun_local/               Local microVM architecture (protocol)
-  25_durable_harness/              Step-log crash resume (real)
+  25_durable_harness/              Local step-log resume (simulated crash and costs)
   26_risk_routed_sandbox/          Combined sandbox integration (mixed)
 docs/                              Static site for GitHub Pages (SEO + GEO)
 run_all.sh                         Run all 26 experiments end-to-end
