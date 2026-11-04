@@ -65,6 +65,18 @@ class EgressReportingTests(unittest.TestCase):
                 self.assertEqual(result["iptables_listing_status"], status)
                 self.assertNotIn("iptables_available", result)
 
+    def test_bubblewrap_command_outcomes(self):
+        cases = [(MagicMock(returncode=0, stdout="sandboxed"), None, "succeeded", True),
+                 (MagicMock(returncode=1, stdout=""), None, "failed", False),
+                 (None, FileNotFoundError(), "not_found", None),
+                 (None, experiment.subprocess.TimeoutExpired("bwrap", 5), "timed_out", None)]
+        for response, error, status, works in cases:
+            with self.subTest(status=status), patch.object(experiment.subprocess, "run", return_value=response, side_effect=error):
+                result = experiment.test_bubblewrap()
+                self.assertEqual(result["command_status"], status)
+                self.assertIs(result["works"], works)
+                self.assertNotIn("available", result)
+
     def test_bubblewrap_timeout_is_not_missing_binary(self):
         with patch.object(experiment.subprocess, "run", side_effect=experiment.subprocess.TimeoutExpired("bwrap", 5)):
             result = experiment.test_bubblewrap()

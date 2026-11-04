@@ -160,9 +160,9 @@ def main():
     print("-" * 50)
 
     bwrap = test_bubblewrap()
-    status = "CHECK PASS" if bwrap["works"] else "CHECK FAIL"
+    status = "CHECK PASS" if bwrap["works"] is True else "CHECK FAIL" if bwrap["works"] is False else "UNKNOWN"
     print(f"  [{status:<11}] Bubblewrap sandbox: "
-          f"{'works' if bwrap['works'] else 'command did not succeed'}"
+          f"{'works' if bwrap['works'] is True else 'command failed' if bwrap['works'] is False else 'command outcome unknown'}"
           + (f" ({bwrap['startup_sec']*1000:.1f}ms)" if bwrap["works"] else ""))
 
     egress = test_egress_allowlist()
