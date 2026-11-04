@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Research Findings — Agent Factory Lab</title>
-  <meta name="description" content="Six research findings on AI coding agent improvements: writer/reviewer pipelines, cheap-model routing, batched tool calls, prompt caching, session persistence, and backlog-to-ship automation. Each sourced from X with experiment designs.">
+  <meta name="description" content="17 research findings on AI coding agent improvements: batched tool calls, prompt caching, mutation testing, stop hooks, terse completions, agent races, writer/reviewer pipelines, HANDOFF.md context transfer, and more. Each sourced from X with experiment designs.">
   <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/findings.html">
 
   <meta property="og:type" content="article">
@@ -54,7 +54,7 @@
 <main class="container">
 
   <h1>Research Findings</h1>
-  <p class="text-muted mb-2">Six techniques for improving AI coding agents, each sourced from X with a proposal and experiment design.</p>
+  <p class="text-muted mb-2">17 techniques for improving AI coding agents, each sourced from X with a proposal and experiment design.</p>
 
   <section id="finding-1">
     <h2>1. Cross-Model Writer/Reviewer/QA Pipeline</h2>
@@ -127,6 +127,105 @@
     <p>Landroval already covers code generation and test execution. Complete the SuperPlane pattern by adding backlog triage, approval gates, deploy triggers, and cycle-time metrics. A 10-item capability checklist is provided.</p>
     <h3>Experiment</h3>
     <p>State machine implementation with 5 sample issues. <span class="badge badge--simulated">Simulated</span> — design exercise with runnable code.</p>
+  </section>
+
+  <section id="finding-7">
+    <h2>7. Cap AI Review at 3 Rounds</h2>
+    <p><strong>Sources:</strong> <a href="https://x.com/i/status/2114604912520921136">X post</a>, <a href="https://x.com/Bic_Revelation/status/2115286181592346745">@Bic_Revelation</a></p>
+    <h3>Idea</h3>
+    <p>Cap review loops at 3 rounds. Maintain a <code>findings.jsonl</code> log the reviewer checks before commenting to avoid repeated notes. After round 3, the coder re-plans from scratch.</p>
+    <h3>Experiment</h3>
+    <p>Monte Carlo simulation: 1,000 trials &times; 10 bugs. <span class="badge badge--simulated">Simulated</span> — 5.2% token reduction (target &ge;30% needs harder bugs).</p>
+  </section>
+
+  <section id="finding-8">
+    <h2>8. Bug Priority Gate (freq &times; severity &ge; 5)</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/Voxyz_ai/status/2116575932957762004">@Voxyz_ai</a></p>
+    <h3>Idea</h3>
+    <p>Fix bugs only when frequency &times; severity &ge; 5. Otherwise file an issue. Never trust another agent's "done" without verification.</p>
+    <h3>Experiment</h3>
+    <p>Simulated 15-bug backlog. <span class="badge badge--simulated">Simulated</span> — 18% token savings, zero high-severity bugs missed.</p>
+  </section>
+
+  <section id="finding-9">
+    <h2>9. Score the Reviewer Against Past Incidents</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/i/status/2114604912520921136">X post</a></p>
+    <h3>Idea</h3>
+    <p>Evaluate reviewer effectiveness by scoring against historical data: past incidents, reverts, and known-clean PRs.</p>
+    <h3>Experiment</h3>
+    <p>20-PR synthetic corpus, 500 trials. <span class="badge badge--simulated">Simulated</span> — F1 = 0.793 (catch rate 75.7%, false-alarm rate 15.2%).</p>
+  </section>
+
+  <section id="finding-10">
+    <h2>10. Stop Hook — Block "Done" Until Checks Pass</h2>
+    <p><strong>Sources:</strong> <a href="https://x.com/Cozy2054934/status/2113838957901537487">@Cozy2054934</a>, <a href="https://x.com/Hotfixdaily/status/2112969533203869787">@Hotfixdaily</a></p>
+    <h3>Idea</h3>
+    <p>Gate the "done" signal on test suite, typecheck, and build passing. Include command output as evidence.</p>
+    <h3>Experiment</h3>
+    <p>Real pytest execution. <span class="badge badge--real">Real</span> — buggy code: BLOCKED (0/10 pass); fixed code: PASSED (10/10).</p>
+  </section>
+
+  <section id="finding-11">
+    <h2>11. Mutation Check</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/ganesh2412/status/2115458572519968930">@ganesh2412</a></p>
+    <h3>Idea</h3>
+    <p>Make 3&ndash;5 deliberate breaks per changed function. Require at least one test to fail for each mutation.</p>
+    <h3>Experiment</h3>
+    <p>Real code mutation + pytest. <span class="badge badge--real">Real</span> — 10/10 mutations killed, 100% kill rate.</p>
+  </section>
+
+  <section id="finding-12">
+    <h2>12. HANDOFF.md + Context-Window Restart</h2>
+    <p><strong>Sources:</strong> <a href="https://x.com/iskakovdev/status/2115803578145394794">@iskakovdev</a>, <a href="https://x.com/AaronDelz/status/2115120640072323162">@AaronDelz</a></p>
+    <h3>Idea</h3>
+    <p>Write a HANDOFF.md under 60 lines instead of passing the full transcript. Restart context past ~150K tokens or 60 min idle.</p>
+    <h3>Experiment</h3>
+    <p>Real tiktoken token counting. <span class="badge badge--real">Real</span> — 53% fewer tokens, 100% fact retention, 35 lines.</p>
+  </section>
+
+  <section id="finding-13">
+    <h2>13. Two Corrections &rarr; Skill; Prune Unused</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/educalvolpz/status/2115004827910496389">@educalvolpz</a></p>
+    <h3>Idea</h3>
+    <p>When the same correction appears twice, extract a reusable skill. Prune skills that never prevent a correction.</p>
+    <h3>Experiment</h3>
+    <p>Simulated 50-session correction stream. <span class="badge badge--simulated">Simulated</span> — 10 skills extracted, 0 pruned.</p>
+  </section>
+
+  <section id="finding-14">
+    <h2>14. AGENTS.md Single Source + CLAUDE.md Pointer</h2>
+    <p><strong>Sources:</strong> <a href="https://x.com/mariioalexandre/status/2116333676048892182">@mariioalexandre</a>, <a href="https://x.com/sachintwtss/status/2114947225780355191">@sachintwtss</a>, <a href="https://x.com/triedthatai/status/2117255711537426839">@triedthatai</a></p>
+    <h3>Idea</h3>
+    <p>One AGENTS.md as source of truth. CLAUDE.md is just a pointer (<code>@AGENTS.md</code>). Sub-agents use <code>omitClaudeMd</code>.</p>
+    <h3>Experiment</h3>
+    <p>Config drift simulation (4 agents, 30 edits). <span class="badge badge--simulated">Simulated</span> — single source: 0 drift; duplicated: 3 versions, 6.5 avg drift.</p>
+  </section>
+
+  <section id="finding-15">
+    <h2>15. Stop Writing Once Verification Passes</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/Best_Ethan_/status/2116070176395301057">@Best_Ethan_</a></p>
+    <h3>Idea</h3>
+    <p>Once verification passes, emit only a 3-line report. Lower reasoning effort on the final turn. Particle reports ~45% fewer output tokens.</p>
+    <h3>Experiment</h3>
+    <p>Real tiktoken counting. <span class="badge badge--real">Real</span> — verbose: 415 tokens, terse: 18 tokens (95.7% reduction).</p>
+  </section>
+
+  <section id="finding-16">
+    <h2>16. Agent Races — Run 2&ndash;3 Models, Pick Winner</h2>
+    <p><strong>Sources:</strong> <a href="https://x.com/stretchcloud/status/2115937472550965267">@stretchcloud</a>, <a href="https://x.com/kinabalu/status/2117732717131391359">@kinabalu</a></p>
+    <h3>Idea</h3>
+    <p>For hard tasks, race 2&ndash;3 models in separate worktrees. Pick the winner based on tests/quality. Majority vote for risky actions.</p>
+    <h3>Experiment</h3>
+    <p>Monte Carlo: 500 trials &times; 100 tasks. <span class="badge badge--simulated">Simulated</span> — single: 60%, race-3: 91%, majority vote: 57%.</p>
+  </section>
+
+  <section id="finding-17">
+    <h2>17 (Extra). Rex on Remote VM</h2>
+    <p><strong>Source:</strong> <a href="https://x.com/denCual/status/2115801768571621812">@denCual</a></p>
+    <h3>Idea</h3>
+    <p>Run Rex on a remote Linux VM so sessions survive laptop sleep, network drops, and reboots.</p>
+    <h3>Experiment</h3>
+    <p>Real tmux disconnect/reconnect cycles. <span class="badge badge--real">Real</span> — 100% survival, sub-5ms reconnect, zero state loss.</p>
   </section>
 
 </main>

@@ -1,17 +1,31 @@
 # Agent Factory Lab
 
-> Open research lab testing techniques to make AI coding agents faster, cheaper, and more reliable.
+> Open research lab with 17 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
 
 This site documents research findings and experiment results for improving two AI coding agents: Gwaihir (orchestrator for herdr, a multi-agent coding tool) and Landroval (orchestrator for Rex, a coding factory).
 
-## Key Results
+## Key Results (8 real measurements, 9 simulated/estimated)
 
-- Batched tool calls: 94.5% token reduction (real measurement via tiktoken)
-- Prompt caching: 72.3% cost savings over 20-turn session (real token counts)
-- Parallel pane execution: 1.83x speedup (real tmux measurement)
-- Writer/reviewer pipeline: +15pp fix rate, -42% defect escapes (Monte Carlo simulation)
-- Cheap model routing: 20.9% cost savings (estimated from public pricing)
-- SuperPlane backlog-to-ship: state machine with risk-gated auto-merge (simulated)
+Real measurements:
+- Batched tool calls: 94.5% token reduction, 90% fewer requests (tiktoken)
+- Terse completions: 95.7% output token reduction (tiktoken)
+- Prompt caching: 72.3% cost savings, break-even at turn 2 (tiktoken + pricing)
+- HANDOFF.md: 53% token reduction, 100% fact retention (tiktoken)
+- Parallel pane execution: 1.83x speedup (tmux)
+- Mutation check: 100% kill rate on 10 mutations (pytest)
+- Stop hook: blocks premature "done" on buggy code (pytest)
+- Remote VM sessions: 100% survival across 5 disconnect cycles (tmux)
+
+Simulated/estimated:
+- Writer/reviewer pipeline: +15pp fix rate, -42% defect escapes (Monte Carlo)
+- Agent races: 60% → 91% success rate at 3x cost (Monte Carlo)
+- Cheap model routing: 20.9% cost savings (public pricing)
+- Bug priority gate: 18% token savings, 0 high-severity bugs missed
+- AGENTS.md single source: eliminates config drift (0 vs 6.5 rule gap)
+- Reviewer scoring: F1=0.793 on synthetic corpus
+- Capped review rounds: 5.2% token savings (needs harder scenarios)
+- Correction-to-skill: 10 skills extracted from 150 corrections
+- SuperPlane: 4/5 auto-shipped via risk-gated state machine
 
 ## Pages
 

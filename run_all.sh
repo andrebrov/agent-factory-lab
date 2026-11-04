@@ -61,8 +61,52 @@ echo "── Experiment 6: SuperPlane State Machine ──"
 python3 experiments/06_superplane/run.py
 echo ""
 
+echo "── Experiment 7: Review Round Cap ──"
+python3 experiments/07_review_round_cap/run.py
+echo ""
+
+echo "── Experiment 8: Bug Priority Gate ──"
+python3 experiments/08_bug_priority_gate/run.py
+echo ""
+
+echo "── Experiment 9: Reviewer Scoring ──"
+python3 experiments/09_reviewer_scoring/run.py
+echo ""
+
+echo "── Experiment 10: Stop Hook ──"
+python3 experiments/10_stop_hook/run.py
+echo ""
+
+echo "── Experiment 11: Mutation Check ──"
+python3 experiments/11_mutation_check/run.py
+echo ""
+
+echo "── Experiment 12: HANDOFF.md Context ──"
+python3 experiments/12_handoff_context/run.py
+echo ""
+
+echo "── Experiment 13: Correction → Skill ──"
+python3 experiments/13_correction_to_skill/run.py
+echo ""
+
+echo "── Experiment 14: AGENTS.md Pattern ──"
+python3 experiments/14_agents_md_pattern/run.py
+echo ""
+
+echo "── Experiment 15: Stop on Verification ──"
+python3 experiments/15_stop_on_verification/run.py
+echo ""
+
+echo "── Experiment 16: Agent Races ──"
+python3 experiments/16_agent_races/run.py
+echo ""
+
+echo "── Experiment 17: Remote VM Sessions ──"
+python3 experiments/17_remote_vm_sessions/run.py
+echo ""
+
 echo "=============================================="
-echo "All experiments complete. See results.json in"
-echo "each experiment directory and REPORT.md for"
-echo "the summary."
+echo "All 17 experiments complete. See results.json"
+echo "in each experiment directory and REPORT.md"
+echo "for the summary."
 echo "=============================================="

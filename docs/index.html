@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Agent Factory Lab — Research for Smarter AI Coding Agents</title>
-  <meta name="description" content="Open research lab testing techniques to make AI coding agents faster and cheaper: batched tool calls (94.5% token savings), prompt caching (72% cost reduction), writer/reviewer pipelines, and more. Real measurements, not hype.">
+  <meta name="description" content="Open research lab with 17 experiments on AI coding agent optimization: batched tool calls (94.5% token savings), prompt caching (72% cost reduction), mutation testing (100% kill rate), stop hooks, terse completions (95.7% output savings), agent races, and more. 8 real measurements, not hype.">
   <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/">
 
   <!-- Open Graph -->
@@ -92,9 +92,9 @@
     <h1>Agent Factory Lab</h1>
     <p class="subtitle">Open research lab testing techniques to make AI coding agents faster, cheaper, and more reliable. Real measurements, not hype.</p>
     <div class="badges">
-      <span class="badge badge--real">3 real measurements</span>
+      <span class="badge badge--real">8 real measurements</span>
       <span class="badge badge--estimated">2 cost estimates</span>
-      <span class="badge badge--simulated">1 simulation</span>
+      <span class="badge badge--simulated">7 simulations</span>
     </div>
   </div>
 
@@ -137,6 +137,42 @@
         <p><span class="badge badge--simulated">Simulated</span></p>
         <p class="mt-1">Backlog-to-ship state machine with risk gates: low-risk auto-merges, high-risk escalates to human review.</p>
       </div>
+      <div class="card">
+        <h3>Stop Hook</h3>
+        <div class="metric">0% reopen rate</div>
+        <p><span class="badge badge--real">Real (pytest)</span></p>
+        <p class="mt-1">Block "done" until tests pass. Catches all premature completion signals on buggy code; passes on fixed code.</p>
+      </div>
+      <div class="card">
+        <h3>Mutation Check</h3>
+        <div class="metric">100% kill rate</div>
+        <p><span class="badge badge--real">Real (pytest)</span></p>
+        <p class="mt-1">Apply 10 deliberate mutations to fixed code. Every mutation was caught by at least one test. Runs in ~2 seconds.</p>
+      </div>
+      <div class="card">
+        <h3>Terse Completions</h3>
+        <div class="metric">95.7% fewer output tokens</div>
+        <p><span class="badge badge--real">Real (tiktoken)</span></p>
+        <p class="mt-1">3-line completion report vs verbose summary: 18 tokens vs 415 tokens. Stop writing once verification passes.</p>
+      </div>
+      <div class="card">
+        <h3>HANDOFF.md</h3>
+        <div class="metric">53% fewer tokens</div>
+        <p><span class="badge badge--real">Real (tiktoken)</span></p>
+        <p class="mt-1">60-line handoff summary vs full transcript for context transfer. Retains 100% of key facts.</p>
+      </div>
+      <div class="card">
+        <h3>Agent Races</h3>
+        <div class="metric metric--accent">60% → 91% success</div>
+        <p><span class="badge badge--simulated">Simulated</span></p>
+        <p class="mt-1">Race 3 models in parallel on hard tasks. 3x token cost but cost-per-success only ~2x due to higher success rate.</p>
+      </div>
+      <div class="card">
+        <h3>Remote VM Sessions</h3>
+        <div class="metric">100% survival</div>
+        <p><span class="badge badge--real">Real (tmux)</span></p>
+        <p class="mt-1">tmux sessions survive 5 disconnect/reconnect cycles with zero state loss and sub-5ms reconnect.</p>
+      </div>
     </div>
   </section>
 
@@ -169,8 +205,16 @@ bash run_all.sh</code></pre>
         <tr><td>Batched Tool Calls</td><td>tiktoken cl100k_base on actual files</td><td><span class="badge badge--real">Real</span></td></tr>
         <tr><td>Prompt Caching</td><td>tiktoken + Anthropic public pricing</td><td><span class="badge badge--real">Real tokens</span></td></tr>
         <tr><td>Session Layer</td><td>tmux pane execution + JSON checkpoint</td><td><span class="badge badge--real">Real</span></td></tr>
+        <tr><td>Stop Hook</td><td>pytest against buggy &amp; fixed code</td><td><span class="badge badge--real">Real</span></td></tr>
+        <tr><td>Mutation Check</td><td>Code mutation + pytest execution</td><td><span class="badge badge--real">Real</span></td></tr>
+        <tr><td>HANDOFF.md</td><td>tiktoken on transcript vs summary</td><td><span class="badge badge--real">Real</span></td></tr>
+        <tr><td>Terse Completions</td><td>tiktoken on verbose vs terse output</td><td><span class="badge badge--real">Real</span></td></tr>
+        <tr><td>Remote VM Sessions</td><td>tmux disconnect/reconnect cycles</td><td><span class="badge badge--real">Real</span></td></tr>
         <tr><td>Writer/Reviewer</td><td>Monte Carlo, 1000 trials × 10 bugs</td><td><span class="badge badge--simulated">Simulated</span></td></tr>
+        <tr><td>Agent Races</td><td>Monte Carlo, 500 trials × 100 tasks</td><td><span class="badge badge--simulated">Simulated</span></td></tr>
         <tr><td>Model Routing</td><td>Public pricing × synthetic trace</td><td><span class="badge badge--estimated">Estimated</span></td></tr>
+        <tr><td>Bug Priority Gate</td><td>Simulated bug backlog (15 bugs)</td><td><span class="badge badge--simulated">Simulated</span></td></tr>
+        <tr><td>AGENTS.md Pattern</td><td>Config drift simulation (4 agents)</td><td><span class="badge badge--simulated">Simulated</span></td></tr>
         <tr><td>SuperPlane</td><td>State machine with 5 sample issues</td><td><span class="badge badge--simulated">Simulated</span></td></tr>
       </tbody>
     </table>

@@ -111,6 +111,128 @@ Longer-term (design-stage):
 6. SuperPlane pattern for Landroval: state machine ready, 10-item checklist
 7. herdr-core session persistence: prototype works, needs API integration
 
+## Finding 7: Cap AI Review at 3 Rounds with Findings Log
+
+Sources: https://x.com/i/status/2114604912520921136, https://x.com/Bic_Revelation/status/2115286181592346745
+
+Cap review loops at 3 rounds. Maintain a findings.jsonl log the reviewer checks before commenting to avoid repeated notes. After round 3, re-plan from scratch.
+
+Experiment result (SIMULATED — Monte Carlo, 1000 trials × 10 bugs):
+- Uncapped avg rounds: 1.40, Capped avg rounds: 1.38
+- Token reduction: 5.2% (target ≥30% not met with easy bugs; cap is more valuable for hard bugs)
+
+## Finding 8: Bug Priority Gate (freq × severity ≥ 5)
+
+Source: https://x.com/Voxyz_ai/status/2116575932957762004
+
+Fix bugs only when frequency × severity ≥ 5. Otherwise file an issue. Never trust another agent's "done" without verification.
+
+Experiment result (SIMULATED — 15-bug backlog):
+- Bugs fixed: 12/15, Bugs filed: 3/15
+- Token savings: 17.8%
+- High-severity bugs missed: 0
+
+## Finding 9: Score the Reviewer Against Past Incidents
+
+Source: https://x.com/i/status/2114604912520921136
+
+Evaluate reviewer effectiveness against historical data: past incidents, reverts, known-clean PRs.
+
+Experiment result (SIMULATED — 20-PR corpus, 500 trials):
+- Catch rate (recall): 75.7%
+- False-alarm rate: 15.2%
+- Precision: 83.3%, F1: 0.793
+
+## Finding 10: Stop Hook — Block "Done" Until Checks Pass
+
+Sources: https://x.com/Cozy2054934/status/2113838957901537487, https://x.com/Hotfixdaily/status/2112969533203869787
+
+Gate the "done" signal on test/typecheck/build passing. Include command output as evidence.
+
+Experiment result (REAL — pytest execution):
+- Buggy code: 0 passed, 10 failed → hook BLOCKED
+- Fixed code: 10 passed, 0 failed → hook PASSED
+- Reopen rate: from 35% (estimated without hook) to 0% (with hook)
+
+## Finding 11: Mutation Check
+
+Source: https://x.com/ganesh2412/status/2115458572519968930
+
+Make 3-5 deliberate breaks per changed function. Require at least one test to fail for each mutation.
+
+Experiment result (REAL — code mutation + pytest):
+- Mutations applied: 10
+- Killed (test caught): 10
+- Survived (test missed): 0
+- Kill rate: 100%
+
+## Finding 12: HANDOFF.md + Context-Window Restart
+
+Sources: https://x.com/iskakovdev/status/2115803578145394794, https://x.com/AaronDelz/status/2115120640072323162
+
+Write HANDOFF.md under 60 lines instead of full transcript. Restart context past 150K tokens or 60 min idle.
+
+Experiment result (REAL — tiktoken token counting):
+- Full transcript: 561 tokens
+- HANDOFF.md: 263 tokens (53.1% reduction)
+- Key facts retained: 13/13 (100%)
+- Under 60 lines: Yes (35 lines)
+
+## Finding 13: Two Corrections → Skill; Prune Unused
+
+Source: https://x.com/educalvolpz/status/2115004827910496389
+
+When the same correction appears twice, extract a reusable skill. Prune skills that never prevent corrections.
+
+Experiment result (SIMULATED — 50 sessions, 150 corrections):
+- Skills extracted: 10
+- Skills pruned: 0
+- All correction types seen ≥2 times were captured
+
+## Finding 14: AGENTS.md as Single Source + CLAUDE.md Pointer
+
+Sources: https://x.com/mariioalexandre/status/2116333676048892182, https://x.com/sachintwtss/status/2114947225780355191, https://x.com/triedthatai/status/2117255711537426839
+
+One AGENTS.md as source of truth. CLAUDE.md says @AGENTS.md. Sub-agents use omitClaudeMd.
+
+Experiment result (SIMULATED — 4 agents, 30 edits):
+- Single source: 0 divergent copies, 0 drift
+- Duplicated: 3 unique versions, 6.5 avg rule drift
+
+## Finding 15: Stop Writing Once Verification Passes
+
+Source: https://x.com/Best_Ethan_/status/2116070176395301057
+
+Emit a 3-line report after verification passes. Lower reasoning effort on final turn.
+
+Experiment result (REAL — tiktoken):
+- Verbose: 415 tokens, Terse: 18 tokens
+- Reduction: 95.7%
+- Particle's claim: ~45% (our terse is more aggressive)
+
+## Finding 16: Agent Races
+
+Sources: https://x.com/stretchcloud/status/2115937472550965267, https://x.com/kinabalu/status/2117732717131391359
+
+Run 2-3 models in parallel on hard tasks. Pick the winner. Majority vote for risky actions.
+
+Experiment result (SIMULATED — 500 trials × 100 tasks):
+- Single agent: 59.8% success
+- Race 2: 81.7% success (2x cost)
+- Race 3: 91.2% success (3x cost)
+- Majority vote: 57.3% (safety layer)
+
+## Finding 17 (Extra): Rex on Remote VM
+
+Source: https://x.com/denCual/status/2115801768571621812
+
+Run Rex on a remote Linux VM so sessions survive laptop sleeping.
+
+Experiment result (REAL — tmux sessions):
+- Survival rate: 100% (5/5 cycles)
+- Avg reconnect time: 0.005s
+- State loss: none
+
 ## How to Run
 
 git clone https://github.com/andrebrov/agent-factory-lab.git
