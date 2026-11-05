@@ -159,8 +159,24 @@ echo "── Experiment 29: AGENTS.md Check ──"
 python3 experiments/29_agents_md_check/run.py
 echo ""
 
+echo "── Experiment 30: Verifier-Only Lane ──"
+python3 experiments/30_verifier_only_lane/run.py
+echo ""
+
+echo "── Experiment 31: Repo Map ──"
+python3 experiments/31_repo_map/run.py
+echo ""
+
+echo "── Experiment 32: Handoff Accept ──"
+python3 experiments/32_handoff_accept/run.py
+echo ""
+
+echo "── Experiment 33: Write/Review Router ──"
+python3 experiments/33_write_review_router/run.py
+echo ""
+
 echo "=============================================="
-echo "All 29 experiments complete. See results.json"
+echo "All 33 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

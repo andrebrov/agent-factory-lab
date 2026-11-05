@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (29 experiments)
+## Headline Results (33 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -33,6 +33,10 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **TokenEconomizer offline tests** | **643/644 pass**, claims 18-31% savings | Real tests, unverified claims |
 | **Message threads payload** | **82.7% payload reduction** (latency, not cost) | Real (tiktoken) |
 | **AGENTS.md check + root guard** | **9/9 tests pass** | Real |
+| **Verifier-only lane** | **7/10 real accuracy**, 96% fewer bad merges | Real + simulated |
+| **Repo map before reads** | **57% fewer tokens**, 0 wrong-file opens | Real (tiktoken) |
+| Handoff accept gate | Eliminates silent discards, 100% wasted tokens saved | Simulated |
+| Write/review router | 20-40% review cost savings | Estimated |
 
 ## Quick Start
 
@@ -48,7 +52,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          29 research findings (markdown, sourced from X)
+findings/                          33 research findings (markdown, sourced from X)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -80,8 +84,12 @@ experiments/
   27_token_economizer/             Offline test suite + cost model (mixed)
   28_message_threads/              Payload reduction model (real tiktoken)
   29_agents_md_check/              Size check + repo root guard (real)
+  30_verifier_only_lane/           Builder+verifier separation (real + simulated)
+  31_repo_map/                     Repo map token savings (real tiktoken)
+  32_handoff_accept/               Handoff accept gate (simulated)
+  33_write_review_router/          Review routing cost model (estimated)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 29 experiments end-to-end
+run_all.sh                         Run all 33 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

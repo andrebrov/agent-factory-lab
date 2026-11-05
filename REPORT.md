@@ -8,13 +8,13 @@
 
 ## Overview
 
-Twenty-nine research findings about coding-agent improvements were collected from
-X (in four batches), documented in `findings/`, and tested via runnable
-experiments. **Sixteen experiments produce real measurements** (token counts,
-execution times, sandboxing, mutation testing, booby-trap scanning, test
-suites); thirteen use simulated or estimated data (Monte Carlo, cost modeling,
-protocol-only, unverified paper claims). Every number below is labeled
-accordingly.
+Thirty-three research findings about coding-agent improvements were collected
+from X (in five batches), documented in `findings/`, and tested via runnable
+experiments. **Eighteen experiments produce real measurements** (token counts,
+execution times, sandboxing, mutation testing, booby-trap scanning, verifier
+lanes, repo maps); fifteen use simulated or estimated data (Monte Carlo, cost
+modeling, protocol-only, unverified paper claims). Every number below is
+labeled accordingly.
 
 ---
 
@@ -711,6 +711,88 @@ Both are <1ms and ready for integration.
 
 ---
 
+## Nov 5 Digest Experiments (Findings 30–33)
+
+### Experiment 30: Verifier-Only Lane
+
+**Finding:** A worker that never builds — only reviews diffs and runs tests.
+
+**Method:** Real pytest verification of correct and wrong fixes + Monte Carlo.
+**Status: MIXED — verifier execution is REAL; Monte Carlo is SIMULATED**
+
+| Metric | Value |
+|---|---|
+| Verifier accuracy (real pytest) | **7/10** |
+| Bad merge reduction (simulated) | **96.3%** (35.4% → 1.3%) |
+| Trials | 200 × 5 bugs |
+
+The verifier catches wrong fixes via real test execution. 3/10 results show
+test-suite limitations (a "wrong" fix that still passes tests, or a "correct"
+fix that fails due to other interacting bugs). These honest results show why
+mutation testing (Exp 11) is a valuable complement.
+
+---
+
+### Experiment 31: Repo Map Before Reads
+
+**Finding:** Agents consult a short local map of folder purposes before
+opening files.
+
+**Method:** Real tiktoken token counting + simulated file selection.
+**Status: REAL TOKEN COUNTS**
+
+| Metric | Without Map | With Map |
+|---|---|---|
+| Total tokens read (5 tasks) | 10,440 | 4,478 |
+| **Token reduction** | baseline | **57.1%** |
+| Wrong-file opens | 10 | **0** |
+| Map overhead (one-time) | n/a | 148 tokens |
+
+The repo map eliminates wrong-file opens entirely and reduces tokens read by
+57%. The 148-token map cost is amortized over multiple tasks.
+
+---
+
+### Experiment 32: Handoff Accept + Context Health
+
+**Finding:** Require explicit accept for cross-session handoffs; surface
+cache/context health metrics.
+
+**Method:** Monte Carlo, 500 trials × 100 tasks. **Status: SIMULATED**
+
+| Metric | No Gate | With Gate |
+|---|---|---|
+| Discard/respawn rate | 30.1% | 60.1% (informed) |
+| Silent discards | 15,066 | **0** |
+| Wasted tokens | 1.73B | **0** |
+| Wasted token reduction | baseline | **100%** |
+
+The accept gate eliminates silent discards (30% → 0%). Informed respawns are
+higher (60%) because the gate detects cache expiry and full contexts that
+would have been silently ignored before — but these waste no tokens because
+rejection happens before work begins.
+
+---
+
+### Experiment 33: Write/Review Router
+
+**Finding:** Strong model for judgment, cheap for mechanical checks.
+
+**Method:** Cost model with public pricing. **Status: ESTIMATED**
+
+| Mode | Review Cost |
+|---|---|
+| All-frontier (Opus) | $0.728 |
+| Routed (Haiku mech + Opus judgment) | $0.580 |
+| **Routing savings** | **20.4%** |
+| **+ Early exit on mech failure (25%)** | **40.2%** |
+
+Routing mechanical review steps (lint, types, tests, formatting) to Haiku
+saves 20% on review cost. If mechanical checks fail first (25% of PRs),
+skipping the frontier judgment step saves up to 40%.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -729,6 +811,8 @@ Both are <1ms and ready for integration.
 12. **Consider step-log resume with idempotent or deduplicated effects** — skipped steps on resume represent 58% of modeled fresh-run tokens, not total crash+resume savings or exactly-once (Exp 25)
 13. **Use filesystem snapshot/restore** — sub-50ms restore for 20MB state (Exp 23)
 14. **Add AGENTS.md size check + repo root guard** — 9/9 tests pass (Exp 29)
+15. **Use repo map before reads** — 57% fewer tokens, 0 wrong-file opens (Exp 31)
+16. **Add verifier-only lane** — 7/10 real accuracy, 96% fewer bad merges simulated (Exp 30)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -740,6 +824,8 @@ Both are <1ms and ready for integration.
 19. **Per-second billing for microVMs** — 94% savings vs hourly (Exp 22)
 20. **Risk-routed sandbox tiers** — design proposal only; routing and integrated policies not tested (Exp 26)
 21. **Enable Anthropic message threads** — 83% payload reduction, ~35% TTFT claim (Exp 28)
+22. **Write/review router** — 20-40% review cost savings (Exp 33)
+23. **Handoff accept gate** — eliminates silent discards, 100% wasted token reduction (Exp 32)
 
 ### Longer-Term (design-stage / protocol-only)
 
