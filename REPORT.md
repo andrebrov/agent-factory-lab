@@ -8,13 +8,13 @@
 
 ## Overview
 
-Thirty-three research findings about coding-agent improvements were collected
-from X (in five batches), documented in `findings/`, and tested via runnable
-experiments. **Eighteen experiments produce real measurements** (token counts,
+Thirty-six research findings about coding-agent improvements were collected
+from X (in six batches), documented in `findings/`, and tested via runnable
+experiments. **Twenty-one experiments produce real measurements** (token counts,
 execution times, sandboxing, mutation testing, booby-trap scanning, verifier
-lanes, repo maps); fifteen use simulated or estimated data (Monte Carlo, cost
-modeling, protocol-only, unverified paper claims). Every number below is
-labeled accordingly.
+lanes, repo maps, linters, session migration); fifteen use simulated or
+estimated data (Monte Carlo, cost modeling, protocol-only, unverified paper
+claims). Every number below is labeled accordingly.
 
 ---
 
@@ -793,6 +793,71 @@ skipping the frontier judgment step saves up to 40%.
 
 ---
 
+## Nov 6 Digest Experiments (Findings 34–36)
+
+### Experiment 34: Cache-Monotonic Prefix Linter
+
+**Finding:** Volatile content (timestamps, UUIDs) in the static prefix
+invalidates prompt caching. A linter flags violations before the agent starts.
+
+**Method:** Real linter + tiktoken token counting. **Status: REAL**
+
+| Metric | Clean Prefix | Dirty Prefix |
+|---|---|---|
+| Linter violations | **0** | **5** |
+| Linter warnings | 1 | 2 |
+| Prefix tokens | 118 | 176 |
+| Cacheable tokens (10 turns) | 1,845 | 0 |
+| **Cost savings** | baseline | **86.7%** |
+| Final cache hit % | 94.0% | 0.0% |
+
+The linter correctly catches timestamps, UUIDs, random seeds, request IDs,
+and non-canonical tool JSON. A clean prefix saves 87% vs a dirty prefix by
+enabling prompt caching.
+
+---
+
+### Experiment 35: Status Notes vs Transcript Re-Reads
+
+**Finding:** Short status notes replace expensive full-transcript re-reads for
+status polling. An append-only decisions.md logs agent divergence.
+
+**Method:** Real tiktoken token counting. **Status: REAL**
+
+| Metric | Value |
+|---|---|
+| Transcript size | 457 tokens |
+| Status note size | 32 tokens |
+| **Polling token reduction** | **93.0%** |
+| decisions.md size | 79 tokens |
+| **Divergence detection savings** | **82.7%** |
+
+Status notes save 93% of tokens vs re-reading the full transcript. decisions.md
+saves 83% for divergence detection.
+
+---
+
+### Experiment 36: Session Migrate/Restore + Pegboard Config Sync
+
+**Finding:** moshi-hook mux for session migration; Pegboard for single-config
+sync across harnesses.
+
+**Method:** Real tmux dump/restore + real Pegboard prototype.
+**Status: REAL**
+
+| Component | Result |
+|---|---|
+| moshi-hook installed | Yes (v0.4.50) |
+| moshi-hook dump/restore | Needs 0.4.51+ (not available) |
+| tmux session dump/restore | **Success** (state intact, 14ms restore) |
+| Pegboard: harnesses synced | **3** (Claude Code, Codex, Cursor) |
+| Pegboard: MCP config consistent | **Yes** (same hash across all 3) |
+
+tmux dump/restore works with state intact. Pegboard syncs one config to 3
+harnesses with zero drift. moshi-hook dump/restore needs version 0.4.51+.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -813,6 +878,9 @@ skipping the frontier judgment step saves up to 40%.
 14. **Add AGENTS.md size check + repo root guard** — 9/9 tests pass (Exp 29)
 15. **Use repo map before reads** — 57% fewer tokens, 0 wrong-file opens (Exp 31)
 16. **Add verifier-only lane** — 7/10 real accuracy, 96% fewer bad merges simulated (Exp 30)
+17. **Lint prompt prefix for volatile content** — 87% cost savings, 0 violations on clean prefix (Exp 34)
+18. **Use status notes instead of transcript re-reads** — 93% token reduction (Exp 35)
+19. **Use Pegboard for cross-harness config sync** — 3 harnesses, 0 drift (Exp 36)
 
 ### Medium-Confidence (backed by cost models and simulations)
 

@@ -175,8 +175,20 @@ echo "── Experiment 33: Write/Review Router ──"
 python3 experiments/33_write_review_router/run.py
 echo ""
 
+echo "── Experiment 34: Cache-Monotonic Prefix ──"
+python3 experiments/34_cache_monotonic/run.py
+echo ""
+
+echo "── Experiment 35: Status Notes ──"
+python3 experiments/35_status_notes/run.py
+echo ""
+
+echo "── Experiment 36: Session Migrate ──"
+python3 experiments/36_session_migrate/run.py
+echo ""
+
 echo "=============================================="
-echo "All 33 experiments complete. See results.json"
+echo "All 36 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

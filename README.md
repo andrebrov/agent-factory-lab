@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (33 experiments)
+## Headline Results (36 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -37,6 +37,10 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Repo map before reads** | **57% fewer tokens**, 0 wrong-file opens | Real (tiktoken) |
 | Handoff accept gate | Eliminates silent discards, 100% wasted tokens saved | Simulated |
 | Write/review router | 20-40% review cost savings | Estimated |
+| **Cache-monotonic prefix linter** | **87% cost savings** (clean vs dirty prefix) | Real (tiktoken) |
+| **Status notes vs re-reads** | **93% token reduction** for status polling | Real (tiktoken) |
+| **Pegboard config sync** | **3 harnesses**, 0 drift, all MCP consistent | Real |
+| **Session dump/restore** | State intact, 14ms restore | Real (tmux) |
 
 ## Quick Start
 
@@ -52,7 +56,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          33 research findings (markdown, sourced from X)
+findings/                          36 research findings (markdown, sourced from X)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -88,8 +92,11 @@ experiments/
   31_repo_map/                     Repo map token savings (real tiktoken)
   32_handoff_accept/               Handoff accept gate (simulated)
   33_write_review_router/          Review routing cost model (estimated)
+  34_cache_monotonic/              Prefix linter + cache impact (real)
+  35_status_notes/                 Status notes vs transcript re-reads (real)
+  36_session_migrate/              tmux dump/restore + Pegboard config (real)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 33 experiments end-to-end
+run_all.sh                         Run all 36 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 
