@@ -187,8 +187,20 @@ echo "── Experiment 36: Session Migrate ──"
 python3 experiments/36_session_migrate/run.py
 echo ""
 
+echo "── Experiment 37: Fresh Reviewer ──"
+python3 experiments/37_fresh_reviewer/run.py
+echo ""
+
+echo "── Experiment 38: Generated Handoff ──"
+python3 experiments/38_generated_handoff/run.py
+echo ""
+
+echo "── Experiment 39: Fold-and-Restore ──"
+python3 experiments/39_fold_restore/run.py
+echo ""
+
 echo "=============================================="
-echo "All 36 experiments complete. See results.json"
+echo "All 39 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

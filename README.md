@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (36 experiments)
+## Headline Results (39 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -41,6 +41,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Status notes vs re-reads** | **93% token reduction** for status polling | Real (tiktoken) |
 | **Pegboard config sync** | **3 harnesses**, 0 drift, all MCP consistent | Real |
 | **Session dump/restore** | State intact, 14ms restore | Real (tmux) |
+| **Fresh reviewer** | 3/5 correct, **4/4 adversarial caught** | Measured (pytest) |
+| **Generated handoff** | **38.7% token savings**, zero LLM calls | Measured (tiktoken) |
+| **Fold-and-restore** | 38% reduction, **5/5 restorable** vs 0/5 hard | Measured (tiktoken) |
 
 ## Quick Start
 
@@ -56,7 +59,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          36 research findings (markdown, sourced from X)
+findings/                          39 research findings (markdown, sourced from X)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -95,8 +98,11 @@ experiments/
   34_cache_monotonic/              Prefix linter + cache impact (real)
   35_status_notes/                 Status notes vs transcript re-reads (real)
   36_session_migrate/              tmux dump/restore + Pegboard config (real)
+  37_fresh_reviewer/               Spec-based review with bug reproduction (measured)
+  38_generated_handoff/            Git-log handoff + stale-TODO scanner (measured)
+  39_fold_restore/                 Fold-and-restore vs hard compaction (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 36 experiments end-to-end
+run_all.sh                         Run all 39 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

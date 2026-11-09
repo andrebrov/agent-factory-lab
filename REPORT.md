@@ -8,13 +8,13 @@
 
 ## Overview
 
-Thirty-six research findings about coding-agent improvements were collected
-from X (in six batches), documented in `findings/`, and tested via runnable
-experiments. **Twenty-one experiments produce real measurements** (token counts,
+Thirty-nine research findings about coding-agent improvements were collected
+from X (in seven batches), documented in `findings/`, and tested via runnable
+experiments. **Twenty-four experiments produce real measurements** (token counts,
 execution times, sandboxing, mutation testing, booby-trap scanning, verifier
-lanes, repo maps, linters, session migration); fifteen use simulated or
-estimated data (Monte Carlo, cost modeling, protocol-only, unverified paper
-claims). Every number below is labeled accordingly.
+lanes, repo maps, linters, session migration, fold-restore); fifteen use
+simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+unverified paper claims). Every number below is labeled accordingly.
 
 ---
 
@@ -858,6 +858,78 @@ harnesses with zero drift. moshi-hook dump/restore needs version 0.4.51+.
 
 ---
 
+## Nov 9 Digest Experiments (Findings 37–39)
+
+### Experiment 37: Fresh-Reviewer Step
+
+**Finding:** Spec-based reviewer confirms bug reproduces before fix and is gone
+after, catching cases where tests pass but the bug persists.
+
+**Method:** Real pytest on buggy, correct, and adversarial patches.
+**Status: MEASURED (pytest)**
+
+| Metric | Value |
+|---|---|
+| Correct patches approved | **3/5** |
+| Correct patches rejected | 2/5 (cascading bugs in other functions) |
+| Adversarial patches caught | **4/4** |
+| Tests-only would approve adversarial | 1/5 |
+
+The reviewer catches 4/4 adversarial patches (wrong fixes that might slip past
+a tests-only gate). 2/5 correct patches are rejected because fixing a single
+bug in the multi-bug `mathlib.py` leaves other bugs that cascade into test
+failures — an honest result showing why per-function isolation matters.
+
+---
+
+### Experiment 38: Generated Session Handoff + Stale-TODO Scanner
+
+**Finding:** Auto-generate handoff from git log + spec (no model call).
+Scan for stale TODOs that waste agent time.
+
+**Method:** Real git log, tiktoken token counting, file scanning.
+**Status: MEASURED (tiktoken)**
+
+| Metric | Value |
+|---|---|
+| Handoff size | 467 tokens (45 lines) |
+| Without handoff (read all files) | 2,106 tokens |
+| With handoff (handoff + target) | 1,292 tokens |
+| **Token savings** | **38.7%** |
+| Stale TODOs found | 6 |
+
+The handoff is generated from structured sources with zero LLM calls and
+saves 39% of context tokens. The stale-TODO scanner catches 6 potentially
+stale markers (mostly regex patterns in the scanner's own source — a
+self-referential but valid detection).
+
+---
+
+### Experiment 39: Fold-and-Restore vs Hard Compaction
+
+**Finding:** Keep recent window raw, fold finished subtasks into restorable
+summaries. Inspired by billion-context (repo is real, 775+ files, but
+`npm test` hangs; the paper's claims are the authors' own, not verified).
+
+**Method:** Minimal Python prototype, real tiktoken token counting.
+**Status: MEASURED (tiktoken)**
+
+| Metric | No Compaction | Hard Compaction | Fold-and-Restore |
+|---|---|---|---|
+| Final tokens (10 subtasks) | 514 | 297 (42% reduction) | 319 (38% reduction) |
+| Subtasks restorable | n/a | **0/5** (irreversible) | **5/5** |
+| Cache-friendly | n/a | No (rewrites prefix) | Yes (appends at head) |
+
+Fold-and-restore uses ~4pp more tokens than hard compaction but keeps 5/5
+subtasks restorable and preserves the cache prefix. Hard compaction loses all
+detail permanently and invalidates the cache on every rewrite.
+
+billion-context's production claims (94.2% cache hit, 70x fold ratio) are
+structurally plausible from our prototype results but **not verified** — they
+require the full proxy with real model calls.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -881,6 +953,9 @@ harnesses with zero drift. moshi-hook dump/restore needs version 0.4.51+.
 17. **Lint prompt prefix for volatile content** — 87% cost savings, 0 violations on clean prefix (Exp 34)
 18. **Use status notes instead of transcript re-reads** — 93% token reduction (Exp 35)
 19. **Use Pegboard for cross-harness config sync** — 3 harnesses, 0 drift (Exp 36)
+20. **Add fresh-reviewer step** — catches 4/4 adversarial patches, 3/5 correct approved (Exp 37)
+21. **Generate handoffs from git log** — 39% token savings, zero LLM calls (Exp 38)
+22. **Use fold-and-restore over hard compaction** — 38% reduction, 5/5 restorable (Exp 39)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
