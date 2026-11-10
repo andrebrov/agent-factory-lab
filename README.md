@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (39 experiments)
+## Headline Results (40 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -44,6 +44,8 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Fresh reviewer** | 3/5 correct, **4/4 adversarial caught** | Measured (pytest) |
 | **Generated handoff** | **38.7% token savings**, zero LLM calls | Measured (tiktoken) |
 | **Fold-and-restore** | 38% reduction, **5/5 restorable** vs 0/5 hard | Measured (tiktoken) |
+| **Eval gate (dsh-superagent)** | **96% triggers filtered** before LLM call | Measured (reimpl) |
+| **Structured reports** | **70% fewer status tokens**, no LLM parsing | Measured (tiktoken) |
 
 ## Quick Start
 
@@ -59,7 +61,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          39 research findings (markdown, sourced from X)
+findings/                          40 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -101,8 +103,9 @@ experiments/
   37_fresh_reviewer/               Spec-based review with bug reproduction (measured)
   38_generated_handoff/            Git-log handoff + stale-TODO scanner (measured)
   39_fold_restore/                 Fold-and-restore vs hard compaction (measured)
+  40_superagent_eval_gate/         Eval gate + structured reports (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 39 experiments end-to-end
+run_all.sh                         Run all 40 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

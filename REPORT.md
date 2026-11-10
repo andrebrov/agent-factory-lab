@@ -8,13 +8,14 @@
 
 ## Overview
 
-Thirty-nine research findings about coding-agent improvements were collected
-from X (in seven batches), documented in `findings/`, and tested via runnable
-experiments. **Twenty-four experiments produce real measurements** (token counts,
-execution times, sandboxing, mutation testing, booby-trap scanning, verifier
-lanes, repo maps, linters, session migration, fold-restore); fifteen use
-simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
-unverified paper claims). Every number below is labeled accordingly.
+Forty research findings about coding-agent improvements were collected from X
+and GitHub (in eight batches), documented in `findings/`, and tested via
+runnable experiments. **Twenty-five experiments produce real measurements**
+(token counts, execution times, sandboxing, mutation testing, booby-trap
+scanning, verifier lanes, repo maps, linters, session migration, fold-restore,
+eval gates); fifteen use simulated or estimated data (Monte Carlo, cost
+modeling, protocol-only, unverified paper claims). Every number below is
+labeled accordingly.
 
 ---
 
@@ -930,6 +931,55 @@ require the full proxy with real model calls.
 
 ---
 
+## Experiment 40: dsh-superagent Eval Gate + Structured Reports
+
+**Finding:** DeepSeek's dsh-superagent-prototype uses a deterministic gate
+before LLM assessment and structured report states instead of free text.
+
+**Source:** <https://github.com/deepseek-ai/dsh-superagent-prototype>
+
+**Method:** Faithful reimplementation in Python (the original TypeScript was
+not executed); real tiktoken token counting on a 500-trigger stream.
+**Status: MEASURED (reimplementation, not original code)**
+
+### Part A: Eval Gate
+
+| Gate Result | Count | % |
+|---|---|---|
+| Duplicates filtered | 186 | 37.2% |
+| Bots filtered | 154 | 30.8% |
+| Unauthorized filtered | 140 | 28.0% |
+| **Passed to LLM** | **20** | **4.0%** |
+
+**96% of triggers filtered deterministically** — no LLM call needed. This
+avoids an estimated 960,000 tokens (480 calls × 2,000 tokens/call).
+
+### Part B: Structured Reports
+
+| Metric | Free Text | Structured |
+|---|---|---|
+| Report tokens | 123 | 27 |
+| Parse/route tokens | 161 | 57 |
+| Total per status check | 284 | 84 |
+| **Token savings** | baseline | **70.4%** |
+| LLM call for parsing | yes | **no** |
+
+Structured states (`ready|blocked|failed|waiting|dropped|progress`) enable
+deterministic routing — the orchestrator never calls the LLM to parse status.
+
+### Combined
+
+Per 100 incoming requests: **95.6% total token savings** on intake + status
+(203,408 → 9,008 tokens).
+
+**Caveats:** The 96% filter rate reflects the synthetic stream's actor
+distribution (4 allowed users, 3 bots, 2 strangers across 20 threads). Real
+filter rates depend on the actual ratio of valid to invalid triggers. The
+structured-report savings (70%) are measured on representative examples and
+apply regardless of stream composition.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -956,6 +1006,8 @@ require the full proxy with real model calls.
 20. **Add fresh-reviewer step** — catches 4/4 adversarial patches, 3/5 correct approved (Exp 37)
 21. **Generate handoffs from git log** — 39% token savings, zero LLM calls (Exp 38)
 22. **Use fold-and-restore over hard compaction** — 38% reduction, 5/5 restorable (Exp 39)
+23. **Add deterministic eval gate** — 96% of triggers filtered before LLM call (Exp 40)
+24. **Require structured report states** — 70% fewer status-check tokens, no LLM parsing (Exp 40)
 
 ### Medium-Confidence (backed by cost models and simulations)
 

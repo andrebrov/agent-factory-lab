@@ -199,8 +199,12 @@ echo "── Experiment 39: Fold-and-Restore ──"
 python3 experiments/39_fold_restore/run.py
 echo ""
 
+echo "── Experiment 40: Superagent Eval Gate ──"
+python3 experiments/40_superagent_eval_gate/run.py
+echo ""
+
 echo "=============================================="
-echo "All 39 experiments complete. See results.json"
+echo "All 40 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
