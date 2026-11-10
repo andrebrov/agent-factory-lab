@@ -203,8 +203,20 @@ echo "── Experiment 40: Superagent Eval Gate ──"
 python3 experiments/40_superagent_eval_gate/run.py
 echo ""
 
+echo "── Experiment 41: Subagent Spawn ──"
+python3 experiments/41_subagent_spawn/run.py
+echo ""
+
+echo "── Experiment 42: Tokens per Task ──"
+python3 experiments/42_tokens_per_task/run.py
+echo ""
+
+echo "── Experiment 43: Mailbox Review ──"
+python3 experiments/43_mailbox_review/run.py
+echo ""
+
 echo "=============================================="
-echo "All 40 experiments complete. See results.json"
+echo "All 43 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

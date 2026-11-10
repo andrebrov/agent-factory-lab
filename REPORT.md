@@ -8,12 +8,12 @@
 
 ## Overview
 
-Forty research findings about coding-agent improvements were collected from X
-and GitHub (in eight batches), documented in `findings/`, and tested via
-runnable experiments. **Twenty-five experiments produce real measurements**
-(token counts, execution times, sandboxing, mutation testing, booby-trap
-scanning, verifier lanes, repo maps, linters, session migration, fold-restore,
-eval gates); fifteen use simulated or estimated data (Monte Carlo, cost
+Forty-three research findings about coding-agent improvements were collected
+from X and GitHub (in nine batches), documented in `findings/`, and tested
+via runnable experiments. **Twenty-eight experiments produce real measurements**
+(token counts, execution times, sandboxing, mutation testing, verifier lanes,
+repo maps, linters, session migration, fold-restore, eval gates, spawn,
+mailbox review); fifteen use simulated or estimated data (Monte Carlo, cost
 modeling, protocol-only, unverified paper claims). Every number below is
 labeled accordingly.
 
@@ -980,6 +980,82 @@ apply regardless of stream composition.
 
 ---
 
+## Nov 10 Digest Experiments (Findings 41–43)
+
+### Experiment 41: Subagent Spawn — Task File vs Cloned History
+
+**Finding:** Spawn sub-agents with a short task file (< 400 tokens) instead
+of cloning the parent's full session history.
+
+**Method:** Real tiktoken on 5 spawn payloads vs history-clone payloads.
+**Status: MEASURED (tiktoken)**
+
+| Metric | Spawn | Clone |
+|---|---|---|
+| Avg tokens/task | **130** | **1,654** |
+| Total tokens (5 tasks) | 652 | 8,270 |
+| **Token savings** | — | **92.1%** |
+| All task files < 400 tokens | Yes | n/a |
+| Avg task file size | 53 tokens | n/a |
+
+Spawn task files are 11% the size of exp 38 handoffs (53 vs 467 tokens) —
+more focused, less context. Complementary: spawn for fresh subtasks, handoff
+for session continuity.
+
+---
+
+### Experiment 42: Tokens per Completed Task — Efficiency Stack
+
+**Finding:** Measure tokens per *completed* task (not per request), with
+file-read caching, step checkpointing, and stable prefix.
+
+**Method:** Real tiktoken, real file hashing, 5 tasks × 2 injected failures.
+**Status: MEASURED (tiktoken)**
+
+| Scenario | Tokens/Task | vs Naive |
+|---|---|---|
+| Naive, no failures | 3,324 | baseline |
+| **Stack, no failures** | **2,689** | **-19.1%** |
+| Naive, 2 failures/task | 9,972 | baseline |
+| **Stack, 2 failures/task** | **2,737** | **-72.6%** |
+
+The efficiency stack saves 19% normally and **73% under failures** — the gap
+widens dramatically because checkpointing avoids re-running completed steps
+and file caching skips unchanged reads (12 hits vs 1 miss).
+
+---
+
+### Experiment 43: Mailbox Implementer/Reviewer Protocol
+
+**Finding:** File-based mailbox between implementer and reviewer with
+snapshot-specific approval and drift detection.
+
+**Source:** Reimplementation of [agent-coordination](https://github.com/infonomic/agent-coordination).
+
+**Method:** Real pytest + tiktoken on 5 bugs × correct + adversarial fixes.
+**Status: MEASURED (pytest + tiktoken, reimplementation)**
+
+| Metric | Self-Review | Mailbox | Exp 37 |
+|---|---|---|---|
+| Correct approved | 3/5 | 3/5 | 3/5 |
+| **Adversarial caught** | n/a | **5/5** | 4/4 |
+| Token cost (correct, 5 bugs) | 4,164 | **315** | — |
+| Snapshot-specific approval | no | **yes** | no |
+| Bug-reproduction check | no | **yes** | yes |
+| Drift detection | no | **yes** | no |
+
+The mailbox protocol catches **5/5 adversarial** fixes (vs exp 37's 4/4 on a
+different subset). It costs **92% fewer tokens** than self-review (315 vs
+4,164) because the structured handoff/review messages are compact. Self-review
+misses adversarial cases entirely.
+
+**Caveats:** 2/5 correct patches rejected by both mailbox and exp 37 due to
+cascading bugs (same as exp 37 — single-bug patches in a multi-bug codebase).
+The 5/5 adversarial catch rate reflects the specific adversarial patches
+chosen; other adversarial patches might behave differently.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1008,6 +1084,9 @@ apply regardless of stream composition.
 22. **Use fold-and-restore over hard compaction** — 38% reduction, 5/5 restorable (Exp 39)
 23. **Add deterministic eval gate** — 96% of triggers filtered before LLM call (Exp 40)
 24. **Require structured report states** — 70% fewer status-check tokens, no LLM parsing (Exp 40)
+25. **Use task-file spawn for sub-agents** — 92% fewer tokens vs cloned history (Exp 41)
+26. **Track tokens/completed-task with efficiency stack** — 73% savings under failures (Exp 42)
+27. **Use mailbox protocol for implementer/reviewer** — 5/5 adversarial caught, 92% fewer tokens than self-review (Exp 43)
 
 ### Medium-Confidence (backed by cost models and simulations)
 

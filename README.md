@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (40 experiments)
+## Headline Results (43 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -46,6 +46,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Fold-and-restore** | 38% reduction, **5/5 restorable** vs 0/5 hard | Measured (tiktoken) |
 | **Eval gate (dsh-superagent)** | **96% triggers filtered** before LLM call | Measured (reimpl) |
 | **Structured reports** | **70% fewer status tokens**, no LLM parsing | Measured (tiktoken) |
+| **Subagent task-file spawn** | **92% fewer tokens** vs cloned history | Measured (tiktoken) |
+| **Tokens/completed-task stack** | **73% savings** under failures (cache+checkpoint) | Measured (tiktoken) |
+| **Mailbox review** | **5/5 adversarial caught**, 92% fewer tokens than self-review | Measured (pytest+tiktoken) |
 
 ## Quick Start
 
@@ -61,7 +64,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          40 research findings (markdown, sourced from X + GitHub)
+findings/                          43 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -104,8 +107,11 @@ experiments/
   38_generated_handoff/            Git-log handoff + stale-TODO scanner (measured)
   39_fold_restore/                 Fold-and-restore vs hard compaction (measured)
   40_superagent_eval_gate/         Eval gate + structured reports (measured)
+  41_subagent_spawn/               Task-file spawn vs cloned history (measured)
+  42_tokens_per_task/              Efficiency stack with cache + checkpoint (measured)
+  43_mailbox_review/               Implementer/reviewer mailbox protocol (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 40 experiments end-to-end
+run_all.sh                         Run all 43 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 
