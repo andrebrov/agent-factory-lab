@@ -8,14 +8,14 @@
 
 ## Overview
 
-Forty-three research findings about coding-agent improvements were collected
-from X and GitHub (in nine batches), documented in `findings/`, and tested
-via runnable experiments. **Twenty-eight experiments produce real measurements**
+Forty-six research findings about coding-agent improvements were collected
+from X and GitHub (in ten batches), documented in `findings/`, and tested
+via runnable experiments. **Thirty-one experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
-mailbox review); fifteen use simulated or estimated data (Monte Carlo, cost
-modeling, protocol-only, unverified paper claims). Every number below is
-labeled accordingly.
+mailbox review, pane guards, blocking reviewers, discovery tokens); fifteen
+use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+unverified paper claims). Every number below is labeled accordingly.
 
 ---
 
@@ -1056,6 +1056,78 @@ chosen; other adversarial patches might behave differently.
 
 ---
 
+## Nov 11 Digest Experiments (Findings 44–46)
+
+### Experiment 44: Pane Input Guard
+
+**Finding:** Detect unsent human input before injecting agent messages into
+terminal panes. Queue the message until the draft is cleared.
+
+**Method:** Real tmux pane management with simulated user input.
+**Status: MEASURED (tmux)**
+
+| Metric | No Guard | With Guard |
+|---|---|---|
+| Clobber rate (input pending) | **100%** | **0%** |
+| Clean delivery rate | 10/10 | 10/10 |
+| Avg latency (clean pane) | 5.4ms | 10.1ms |
+| Guard overhead | — | 4.7ms |
+| Preflight check | n/a | All pass |
+
+The guard eliminates clobbers entirely at 4.7ms overhead — negligible. The
+preflight check catches missing sessions and broken panes.
+
+---
+
+### Experiment 45: Blocking-Only Reviewer + Eval-First Loop
+
+**Finding:** Restrict the reviewer to blocking issues only (bugs, test
+failures, scope creep). No style nits.
+
+**Method:** Real pytest on correct + adversarial patches.
+**Status: MEASURED (pytest)**
+
+| Metric | Unrestricted | Blocking-Only | Exp 37 | Exp 43 |
+|---|---|---|---|---|
+| Correct approved | 3/5 | 2/5 | 3/5 | 3/5 |
+| **Adversarial caught** | **5/5** | **5/5** | 4/4 | 5/5 |
+| Total comments | 37 | **8** | — | — |
+| Style nits | 30 | **0** | 0 | 0 |
+| Eval-first valid | — | 3/5 | — | — |
+| **Comment reduction** | — | **78%** | — | — |
+
+The blocking-only reviewer catches the same 5/5 adversarial patches with
+78% fewer comments and zero style nits. Blocking-only approves 2/5 correct
+patches (1 fewer than unrestricted) because the mean fix's scope-creep check
+triggers — a reasonable tradeoff for eliminating 30 useless style comments.
+
+---
+
+### Experiment 46: Cut Discovery Tokens + AGENTS.md Diff Guard
+
+**Finding:** Quiet tool flags, trimmed config, exploration sub-agent
+summaries, and a diff guard for AGENTS.md/CLAUDE.md changes.
+
+**Method:** Real tiktoken, real pytest output, real git diff.
+**Status: MEASURED (tiktoken + pytest + git)**
+
+| Lever | Without | With | Savings |
+|---|---|---|---|
+| Test output (verbose → minimal) | 1,695 | 235 | **86%** |
+| AGENTS.md (full → commands only) | 315 | 93 | **70%** |
+| Exploration (full dump → summary) | 2,106 | 117 | **94%** |
+| **Combined discovery phase** | **4,116** | **445** | **89%** |
+
+| Diff Guard | Result |
+|---|---|
+| Injection detected (AGENTS.md + CLAUDE.md) | **Yes** |
+| Clean commit flagged | **No** (zero false positives) |
+
+The four levers combined save 89% of discovery-phase tokens. The diff guard
+catches injected AGENTS.md/CLAUDE.md changes with zero false positives.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1087,6 +1159,10 @@ chosen; other adversarial patches might behave differently.
 25. **Use task-file spawn for sub-agents** — 92% fewer tokens vs cloned history (Exp 41)
 26. **Track tokens/completed-task with efficiency stack** — 73% savings under failures (Exp 42)
 27. **Use mailbox protocol for implementer/reviewer** — 5/5 adversarial caught, 92% fewer tokens than self-review (Exp 43)
+28. **Add pane input guard** — 100% → 0% clobber rate, 4.7ms overhead (Exp 44)
+29. **Use blocking-only reviewer** — same catch rate, 78% fewer comments (Exp 45)
+30. **Cut discovery tokens** — 89% savings from quiet flags + trim + summaries (Exp 46)
+31. **Add AGENTS.md/CLAUDE.md diff guard** — catches injection, zero false positives (Exp 46)
 
 ### Medium-Confidence (backed by cost models and simulations)
 

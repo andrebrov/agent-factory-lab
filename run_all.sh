@@ -215,8 +215,20 @@ echo "── Experiment 43: Mailbox Review ──"
 python3 experiments/43_mailbox_review/run.py
 echo ""
 
+echo "── Experiment 44: Pane Guard ──"
+python3 experiments/44_pane_guard/run.py
+echo ""
+
+echo "── Experiment 45: Blocking Reviewer ──"
+python3 experiments/45_blocking_reviewer/run.py
+echo ""
+
+echo "── Experiment 46: Discovery Tokens ──"
+python3 experiments/46_discovery_tokens/run.py
+echo ""
+
 echo "=============================================="
-echo "All 43 experiments complete. See results.json"
+echo "All 46 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

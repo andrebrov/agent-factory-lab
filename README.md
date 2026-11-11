@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (43 experiments)
+## Headline Results (46 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -49,6 +49,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Subagent task-file spawn** | **92% fewer tokens** vs cloned history | Measured (tiktoken) |
 | **Tokens/completed-task stack** | **73% savings** under failures (cache+checkpoint) | Measured (tiktoken) |
 | **Mailbox review** | **5/5 adversarial caught**, 92% fewer tokens than self-review | Measured (pytest+tiktoken) |
+| **Pane input guard** | **100% → 0% clobber rate**, 4.7ms overhead | Measured (tmux) |
+| **Blocking-only reviewer** | **5/5 adversarial, 78% fewer comments**, 0 style nits | Measured (pytest) |
+| **Discovery token levers** | **89% savings** (quiet+trim+summary), diff guard catches injection | Measured (tiktoken+git) |
 
 ## Quick Start
 
@@ -64,7 +67,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          43 research findings (markdown, sourced from X + GitHub)
+findings/                          46 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -110,8 +113,11 @@ experiments/
   41_subagent_spawn/               Task-file spawn vs cloned history (measured)
   42_tokens_per_task/              Efficiency stack with cache + checkpoint (measured)
   43_mailbox_review/               Implementer/reviewer mailbox protocol (measured)
+  44_pane_guard/                   Pane input guard — don't clobber human (measured)
+  45_blocking_reviewer/            Blocking-only reviewer + eval-first (measured)
+  46_discovery_tokens/             Quiet flags + trim + summaries + diff guard (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 43 experiments end-to-end
+run_all.sh                         Run all 46 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 
