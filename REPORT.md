@@ -8,13 +8,14 @@
 
 ## Overview
 
-Forty-six research findings about coding-agent improvements were collected
-from X and GitHub (in ten batches), documented in `findings/`, and tested
-via runnable experiments. **Thirty-one experiments produce real measurements**
+Forty-nine research findings about coding-agent improvements were collected
+from X and GitHub (in eleven batches), documented in `findings/`, and tested
+via runnable experiments. **Thirty-four experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
-mailbox review, pane guards, blocking reviewers, discovery tokens); fifteen
-use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+mailbox review, pane guards, blocking reviewers, discovery tokens, combined
+gates, staleness checkers, MCP audits); fifteen use simulated or estimated
+data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1128,6 +1129,85 @@ catches injected AGENTS.md/CLAUDE.md changes with zero false positives.
 
 ---
 
+## Nov 12 Digest Experiments (Findings 47–49)
+
+### Experiment 47: Combined-Changes Gate for Parallel Worktrees
+
+**Finding:** Per-branch testing misses semantic conflicts between parallel
+agent worktrees. A combined-merge gate catches them.
+
+**Method:** Real git branching + pytest. 3 branches, all pass individually,
+semantic conflicts on merge. **Status: MEASURED (git + pytest)**
+
+| Metric | Per-Branch | Combined Gate |
+|---|---|---|
+| Breaks caught | **0** | **2** |
+| Integration-only breaks | 0 | **2** |
+| False positives | 0 | 0 |
+| Runtime overhead | — | 0.248s |
+
+Branch A renamed `factorial` → `compute_factorial`. Branches B and C (in
+separate files) called `factorial()` by the old name. Git merge succeeded
+(no textual conflict), but pytest caught 2 import errors. Per-branch testing
+saw 0 problems. Sample: 3 branches, 10+1+1 tests.
+
+---
+
+### Experiment 48: Stale-Instruction Guard
+
+**Finding:** AGENTS.md instructions that contradict the code cause agents to
+introduce regressions. An override directive and a staleness checker help.
+
+**Method:** Simulated agent compliance (Monte Carlo, 500 trials × 4 stale
+instructions) + real pattern-matching checker on 6 planted cases.
+**Status: MIXED — checker is MEASURED, compliance is SIMULATED**
+
+| Metric | No Override | With Override |
+|---|---|---|
+| Followed stale instruction | 59.0% | **14.9%** |
+| Flagged mismatch | 0% | **67.9%** |
+
+| Checker Metric | Value |
+|---|---|
+| Precision | **100%** |
+| Recall | **100%** |
+| F1 | **1.000** |
+| Sample | 6 instructions (4 stale, 2 fresh) |
+
+**Caveat:** The checker's 100% precision/recall is on 6 planted cases with
+hand-written heuristics. Real-world instructions would be harder to match.
+The compliance simulation uses assumed P(follow_stale) values, not measured
+LLM behaviour.
+
+---
+
+### Experiment 49: MCP Tool-Loading Audit
+
+**Finding:** Loading all MCP tool definitions upfront wastes tokens on
+tools that go unused. Pruning and caching reduce the cost dramatically.
+
+**Method:** Real tiktoken on 6 representative MCP server definitions (28
+tools total). **Status: MEASURED (tiktoken)**
+
+| Strategy | Tokens | Savings |
+|---|---|---|
+| All upfront (6 servers) | 516 | baseline |
+| High-use only + deferred | 291 | **43.6%** |
+| Prune unused (2 servers) | 241 | **53.3%** |
+
+| 20-Turn Session | Total Tokens |
+|---|---|
+| All upfront, no cache | 10,320 |
+| Pruned + cached | **699** |
+| **Savings** | **93.2%** |
+
+Sample: 6 servers (filesystem, git, web_search, database, docker, slack),
+28 tools. Token counts are real (tiktoken on representative definitions,
+not live MCP connections). Session savings assume 90% cache-hit rate on
+subsequent turns.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1163,6 +1243,9 @@ catches injected AGENTS.md/CLAUDE.md changes with zero false positives.
 29. **Use blocking-only reviewer** — same catch rate, 78% fewer comments (Exp 45)
 30. **Cut discovery tokens** — 89% savings from quiet flags + trim + summaries (Exp 46)
 31. **Add AGENTS.md/CLAUDE.md diff guard** — catches injection, zero false positives (Exp 46)
+32. **Add combined-changes gate** — catches 2 integration breaks per-branch missed, 0.25s (Exp 47)
+33. **Prune unused MCP servers** — 53% token savings; 93% with caching over 20 turns (Exp 49)
+34. **Add stale-instruction override + checker** — 100% precision/recall on 6 cases (Exp 48)
 
 ### Medium-Confidence (backed by cost models and simulations)
 

@@ -227,8 +227,20 @@ echo "── Experiment 46: Discovery Tokens ──"
 python3 experiments/46_discovery_tokens/run.py
 echo ""
 
+echo "── Experiment 47: Combined Changes Gate ──"
+python3 experiments/47_combined_changes/run.py
+echo ""
+
+echo "── Experiment 48: Stale Instruction Guard ──"
+python3 experiments/48_stale_instruction/run.py
+echo ""
+
+echo "── Experiment 49: MCP Tool Audit ──"
+python3 experiments/49_mcp_tool_audit/run.py
+echo ""
+
 echo "=============================================="
-echo "All 46 experiments complete. See results.json"
+echo "All 49 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
