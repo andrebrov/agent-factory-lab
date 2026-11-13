@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (49 experiments)
+## Headline Results (52 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -55,6 +55,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Combined-changes gate** | **2 integration breaks** caught (0 per-branch), 0.25s overhead | Measured (git+pytest) |
 | **Stale-instruction checker** | **100% precision/recall** on 6 planted cases | Measured (checker) + simulated (compliance) |
 | **MCP tool pruning** | **53% savings** upfront, **93%** with caching over 20 turns | Measured (tiktoken) |
+| **Needs-human queue** | **50% fewer messages**, 100% precision/recall on needs-human | Measured (detection) + simulated (volume) |
+| **Compact dashboard** | **88% fewer tokens** vs raw scrollback for 5-agent review | Measured (tiktoken) |
+| **Proof-of-done gate** | **4/4 false claims caught**, 0 false flags, 160ms overhead | Measured (pytest) |
 
 ## Quick Start
 
@@ -70,7 +73,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          49 research findings (markdown, sourced from X + GitHub)
+findings/                          52 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -122,8 +125,11 @@ experiments/
   47_combined_changes/             Combined-changes gate for parallel worktrees (measured)
   48_stale_instruction/            Stale-instruction guard + checker (mixed)
   49_mcp_tool_audit/               MCP tool-loading token audit (measured)
+  50_needs_human/                  Needs-human queue filter (measured + simulated)
+  51_compact_dashboard/            Compact status dashboard + diff (measured)
+  52_proof_of_done/                Proof-of-done gate + skill budget (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 49 experiments end-to-end
+run_all.sh                         Run all 52 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

@@ -239,8 +239,20 @@ echo "── Experiment 49: MCP Tool Audit ──"
 python3 experiments/49_mcp_tool_audit/run.py
 echo ""
 
+echo "── Experiment 50: Needs Human Queue ──"
+python3 experiments/50_needs_human/run.py
+echo ""
+
+echo "── Experiment 51: Compact Dashboard ──"
+python3 experiments/51_compact_dashboard/run.py
+echo ""
+
+echo "── Experiment 52: Proof of Done ──"
+python3 experiments/52_proof_of_done/run.py
+echo ""
+
 echo "=============================================="
-echo "All 49 experiments complete. See results.json"
+echo "All 52 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

@@ -8,14 +8,13 @@
 
 ## Overview
 
-Forty-nine research findings about coding-agent improvements were collected
-from X and GitHub (in eleven batches), documented in `findings/`, and tested
-via runnable experiments. **Thirty-four experiments produce real measurements**
+Fifty-two research findings about coding-agent improvements were collected
+from X and GitHub (in twelve batches), documented in `findings/`, and tested
+via runnable experiments. **Thirty-seven experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
-mailbox review, pane guards, blocking reviewers, discovery tokens, combined
-gates, staleness checkers, MCP audits); fifteen use simulated or estimated
-data (Monte Carlo, cost modeling, protocol-only,
+mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
+proof-of-done gates); fifteen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1208,6 +1207,79 @@ subsequent turns.
 
 ---
 
+## Nov 13 Digest Experiments (Findings 50–52)
+
+### Experiment 50: 'Needs Human' Queue
+
+**Finding:** Filter agent updates to only actionable items (blocked, error,
+waiting-for-input), suppressing informational ones (running, done, idle).
+
+**Method:** 30 labeled pane text samples (5 per state + 5 ambiguous), rule-based
+state detector. **Status: detection MEASURED, volume SIMULATED**
+
+| Metric | All Updates | Filtered |
+|---|---|---|
+| Messages to human | 30 | **15** |
+| Message reduction | baseline | **50%** |
+| State detection accuracy | n/a | **93.3%** (28/30) |
+| Needs-human precision | n/a | **100%** |
+| Needs-human recall | n/a | **100%** |
+
+2 misclassifications: an ambiguous "done" with coverage warning classified as
+idle, and a partial-complete state classified as done. Neither was a needs-human
+state, so the needs-human binary filter is perfect (100% precision, 100% recall).
+Sample: 30 texts, 5 per state + 5 ambiguous.
+
+---
+
+### Experiment 51: Compact Status Dashboard + Diff Review
+
+**Finding:** Replace raw scrollback with a compact table (and optional per-agent
+diffs) for reviewing N subagent results.
+
+**Method:** Real tiktoken on 5 agents with realistic log output.
+**Status: MEASURED (tiktoken)**
+
+| Format | Tokens | Lines | Savings |
+|---|---|---|---|
+| Raw scrollback | 990 | 126 | baseline |
+| Compact table | **122** | **7** | **87.7%** |
+| Table + diffs | **284** | **35** | **71.3%** |
+
+The compact table saves 88% of tokens. Table+diff saves 71% while preserving
+the actual changes for meaningful review. Sample: 5 agents, 126 lines of
+realistic scrollback.
+
+---
+
+### Experiment 52: Proof-of-Done Gate + Skill Budget Audit
+
+**Finding:** Re-run the test command on "done" claims instead of trusting
+agent self-report. Measure skill-description token budget.
+
+**Method:** Real pytest execution on 8 claims (4 true, 4 false), real tiktoken
+on 15 skill definitions. **Status: MEASURED (pytest + tiktoken)**
+
+| Metric | Trust Only | With Gate |
+|---|---|---|
+| False claims caught | 0/4 | **4/4** |
+| True claims passed | 4/4 | **4/4** |
+| False flags | 0 | **0** |
+| Avg gate runtime | 0ms | **160ms** |
+
+| Skill Budget (1% of 200K = 2K tokens) | Value |
+|---|---|
+| Full descriptions (15 skills) | 433 tokens — **all fit** |
+| Names only (15 skills) | 62 tokens — all fit |
+| Cutover point | Not reached at 15 skills |
+
+The gate catches **4/4 false claims with 0 false flags** at 160ms per claim.
+All 15 sample skill descriptions fit within the 1% budget (433 tokens <<
+2,000); cutover to names-only isn't needed until ~69 skills at this verbosity.
+Sample: 8 claims, 15 skills.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1246,6 +1318,9 @@ subsequent turns.
 32. **Add combined-changes gate** — catches 2 integration breaks per-branch missed, 0.25s (Exp 47)
 33. **Prune unused MCP servers** — 53% token savings; 93% with caching over 20 turns (Exp 49)
 34. **Add stale-instruction override + checker** — 100% precision/recall on 6 cases (Exp 48)
+35. **Filter to needs-human queue** — 50% fewer messages, 100% precision/recall (Exp 50)
+36. **Use compact dashboard for review** — 88% fewer tokens vs scrollback (Exp 51)
+37. **Add proof-of-done gate** — 4/4 false claims caught, 0 false flags, 160ms (Exp 52)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
