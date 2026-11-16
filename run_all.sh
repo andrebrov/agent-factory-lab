@@ -251,8 +251,20 @@ echo "── Experiment 52: Proof of Done ──"
 python3 experiments/52_proof_of_done/run.py
 echo ""
 
+echo "── Experiment 53: Cross-Agent Review ──"
+python3 experiments/53_cross_agent_review/run.py
+echo ""
+
+echo "── Experiment 54: Resume After Restart ──"
+python3 experiments/54_resume_after_restart/run.py
+echo ""
+
+echo "── Experiment 55: Mistake-to-Rule ──"
+python3 experiments/55_mistake_to_rule/run.py
+echo ""
+
 echo "=============================================="
-echo "All 52 experiments complete. See results.json"
+echo "All 55 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

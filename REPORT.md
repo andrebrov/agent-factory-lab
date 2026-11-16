@@ -8,13 +8,14 @@
 
 ## Overview
 
-Fifty-two research findings about coding-agent improvements were collected
-from X and GitHub (in twelve batches), documented in `findings/`, and tested
-via runnable experiments. **Thirty-seven experiments produce real measurements**
+Fifty-five research findings about coding-agent improvements were collected
+from X and GitHub (in thirteen batches), documented in `findings/`, and tested
+via runnable experiments. **Thirty-nine experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
-proof-of-done gates); fifteen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+proof-of-done gates, cross-agent review, pane restart, mistake-to-rule);
+sixteen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1280,6 +1281,97 @@ Sample: 8 claims, 15 skills.
 
 ---
 
+## Nov 16 Digest Experiments (Findings 53–55)
+
+### Experiment 53: Cross-Agent Review Gate (herdr-style)
+
+**Finding:** A second-model reviewer checks the writer's diff. Compare
+writer-alone vs writer+reviewer on seeded bugs.
+
+**Method:** Real pytest for test execution; reviewer is a deterministic test
+gate (no real LLM calls). Token overhead is modeled.
+**Status: pytest MEASURED; reviewer logic SIMULATED; token cost MODELED**
+
+| Metric | Writer Only | Writer+Reviewer |
+|---|---|---|
+| Correct fixes shipped/approved | 3/5 | 3/5 |
+| Adversarial caught | n/a (0/5 shipped) | **5/5** |
+| False findings on correct | 0 | 2 |
+| Token overhead | baseline | +60% (modeled) |
+
+Writer-alone already blocks all 5 adversarial patches (they fail their tests).
+The reviewer adds value by explicitly confirming bug reproduction and
+generating structured findings. The 2 false findings on correct patches are
+the same cascading-bug issue seen in exp 37/43/45 (single-bug fix in multi-bug
+file). Sample: 5 bugs × 2 fix types = 10 scenarios.
+
+**Caveat:** The reviewer is a deterministic test gate, not a real LLM. An
+actual model reviewer might catch different issues (design, security) but
+also produce different false findings. The +60% token overhead is modeled
+at 2500+1500 per task.
+
+---
+
+### Experiment 54: Resume-After-Restart for Rex-Style Panes
+
+**Finding:** Save pane manifest (agent type, session ID, launch flags),
+simulate restart, restore from manifest.
+
+**Method:** Real tmux pane management. **Status: MEASURED (tmux)**
+
+| Metric | Value |
+|---|---|
+| Panes configured | 5 |
+| Panes restored | **5/5** |
+| Restore time | **312ms** |
+| Pane count correct | Yes |
+| Manifest fields intact | **15/15** |
+
+All 5 panes restored in 312ms with all 15 fields (agent, session_id, flags
+× 5 panes) verified intact. Sample: 5 panes with distinct configurations
+(writer/reviewer/qa/deployer/monitor).
+
+---
+
+### Experiment 55: Mistake-to-Rule Loop + Instruction Diet
+
+**Finding:** (a) Turn repeated failures into automated checks. (b) Prune
+always-loaded instructions and measure token reduction.
+
+**Method:** Part A: simulated failure log + real pytest verification.
+Part B: real tiktoken + real pytest.
+**Status: MIXED — token counts MEASURED, block rate SIMULATED, quality
+caveat noted**
+
+**Part A: Mistake-to-Rule**
+
+| Metric | Value |
+|---|---|
+| Failure patterns in log | 8 |
+| Derived checks | 4 |
+| Repeat failures blocked (simulated) | **11/20 (55%)** |
+| Checks verified by pytest | **0/4** |
+
+The 0/4 pytest verification means the pattern-to-test mapping didn't connect
+the derived checks to the right task functions in the sample codebase. The
+55% block rate is simulated from the failure log frequencies, not measured
+end-to-end. The mechanism is sound but needs manual wiring of patterns to
+specific tests.
+
+**Part B: Instruction Diet**
+
+| Metric | Full | Pruned | Savings |
+|---|---|---|---|
+| Instruction tokens | 241 | 62 | **74%** |
+| Pass rate (5 tasks) | 3/5 | 3/5 | 0 change |
+| Per-task savings | — | 358 tokens | — |
+
+**Caveat:** Pass rate is identical (3/5 both modes) because the fixes are
+predetermined — pruning instructions doesn't change which fix is applied.
+Real quality impact requires actual LLM calls with each instruction set.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1321,6 +1413,7 @@ Sample: 8 claims, 15 skills.
 35. **Filter to needs-human queue** — 50% fewer messages, 100% precision/recall (Exp 50)
 36. **Use compact dashboard for review** — 88% fewer tokens vs scrollback (Exp 51)
 37. **Add proof-of-done gate** — 4/4 false claims caught, 0 false flags, 160ms (Exp 52)
+38. **Resume-after-restart** — 5/5 panes restored, 15/15 fields intact, 312ms (Exp 54)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -1334,6 +1427,9 @@ Sample: 8 claims, 15 skills.
 21. **Enable Anthropic message threads** — 83% payload reduction, ~35% TTFT claim (Exp 28)
 22. **Write/review router** — 20-40% review cost savings (Exp 33)
 23. **Handoff accept gate** — eliminates silent discards, 100% wasted token reduction (Exp 32)
+24. **Cross-agent review gate** — 5/5 adversarial caught, but 2 false findings, +60% tokens (Exp 53)
+25. **Instruction diet** — 74% instruction token savings; quality impact unknown without LLM calls (Exp 55)
+26. **Mistake-to-rule loop** — 55% repeat failure block rate (simulated); needs manual check wiring (Exp 55)
 
 ### Longer-Term (design-stage / protocol-only)
 

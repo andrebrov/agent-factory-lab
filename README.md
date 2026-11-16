@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (52 experiments)
+## Headline Results (55 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -58,6 +58,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Needs-human queue** | **50% fewer messages**, 100% precision/recall on needs-human | Measured (detection) + simulated (volume) |
 | **Compact dashboard** | **88% fewer tokens** vs raw scrollback for 5-agent review | Measured (tiktoken) |
 | **Proof-of-done gate** | **4/4 false claims caught**, 0 false flags, 160ms overhead | Measured (pytest) |
+| Cross-agent review gate | 5/5 adversarial caught, 2 false findings, +60% tokens | Measured (pytest) + modeled |
+| **Resume-after-restart** | **5/5 panes, 15/15 fields**, 312ms | Measured (tmux) |
+| Instruction diet | **74% token savings**, quality unknown without LLM | Measured (tiktoken) |
 
 ## Quick Start
 
@@ -73,7 +76,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          52 research findings (markdown, sourced from X + GitHub)
+findings/                          55 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -128,8 +131,11 @@ experiments/
   50_needs_human/                  Needs-human queue filter (measured + simulated)
   51_compact_dashboard/            Compact status dashboard + diff (measured)
   52_proof_of_done/                Proof-of-done gate + skill budget (measured)
+  53_cross_agent_review/           Cross-agent review gate (measured + modeled)
+  54_resume_after_restart/         Resume-after-restart for panes (measured)
+  55_mistake_to_rule/              Mistake-to-rule + instruction diet (mixed)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 52 experiments end-to-end
+run_all.sh                         Run all 55 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 
