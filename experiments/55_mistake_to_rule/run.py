@@ -36,27 +36,32 @@ FAILURE_LOG = [
     {"pattern": "set_loses_order", "count": 2, "description": "Agent uses set() which loses insertion order"},
 ]
 
-# Derived checks from the failure patterns
+# Derived checks from the failure patterns, with explicit task mapping.
+# Each check maps to exactly one task by name — no fuzzy matching.
 DERIVED_CHECKS = {
     "off_by_one_range": {
         "check_type": "lint",
         "rule": "range(0, n) pattern when range(1, n) is expected",
         "test_code": "assert factorial(1) == 1  # catches range(0,...) which gives 0",
+        "task_name": "fix_factorial",
     },
     "wrong_comparison_op": {
         "check_type": "lint",
         "rule": "n // i == 0 should be n % i == 0 for divisibility",
         "test_code": "assert is_prime(4) == False  # catches // instead of %",
+        "task_name": "fix_is_prime",
     },
     "missing_empty_guard": {
         "check_type": "test",
         "rule": "Functions that take collections must handle empty input",
         "test_code": "with pytest.raises(ValueError): mean([])",
+        "task_name": "fix_mean",
     },
     "wrong_return_sentinel": {
         "check_type": "test",
         "rule": "Not-found must return -1, not None/0/mid",
         "test_code": "assert binary_search([1,3,5], 4) == -1",
+        "task_name": "fix_binary_search",
     },
 }
 
@@ -127,10 +132,13 @@ TASK_SET = [
 ]
 
 
+TOKENIZER_MODEL = "gpt-4o"  # o200k_base encoding
+
+
 def count_tokens(text: str) -> int:
     try:
         import tiktoken
-        enc = tiktoken.encoding_for_model("gpt-4o")
+        enc = tiktoken.encoding_for_model(TOKENIZER_MODEL)
         return len(enc.encode(text))
     except ImportError:
         return max(1, int(len(text.split()) * 1.33))
@@ -184,22 +192,32 @@ def main():
     print("  Derived check verification (MEASURED — pytest):")
     buggy = (SAMPLE_DIR / "mathlib.py").read_text()
     checks_verified = 0
+    checks_run = 0
+    task_by_name = {t["name"]: t for t in TASK_SET}
     for pattern, check in DERIVED_CHECKS.items():
-        # The buggy code should fail the derived check's test
-        relevant_task = next((t for t in TASK_SET if pattern in t["name"] or
-                             any(kw in t["name"] for kw in pattern.split("_")[:2])), None)
-        if relevant_task:
-            fails_on_buggy = not run_test(buggy, relevant_task["test"])
-            old, new = relevant_task["fix"]
-            fixed = buggy.replace(old, new, 1)
-            passes_on_fixed = run_test(fixed, relevant_task["test"])
-            verified = fails_on_buggy and passes_on_fixed
-            if verified:
-                checks_verified += 1
-            print(f"    {pattern:<25} buggy_fails={fails_on_buggy} fixed_passes={passes_on_fixed} "
-                  f"→ {'VERIFIED' if verified else 'UNVERIFIED'}")
+        task_name = check["task_name"]
+        relevant_task = task_by_name.get(task_name)
+        if relevant_task is None:
+            raise RuntimeError(
+                f"Derived check '{pattern}' maps to task '{task_name}' "
+                f"which does not exist in TASK_SET. Available: {list(task_by_name.keys())}"
+            )
+        checks_run += 1
+        fails_on_buggy = not run_test(buggy, relevant_task["test"])
+        old, new = relevant_task["fix"]
+        fixed = buggy.replace(old, new, 1)
+        passes_on_fixed = run_test(fixed, relevant_task["test"])
+        verified = fails_on_buggy and passes_on_fixed
+        if verified:
+            checks_verified += 1
+        print(f"    {pattern:<25} task={task_name:<20} "
+              f"buggy_fails={fails_on_buggy} fixed_passes={passes_on_fixed} "
+              f"→ {'VERIFIED' if verified else 'UNVERIFIED'}")
 
-    print(f"\n  Checks verified by pytest: {checks_verified}/{len(DERIVED_CHECKS)}")
+    assert checks_run == len(DERIVED_CHECKS), \
+        f"Expected {len(DERIVED_CHECKS)} checks to run, but only {checks_run} ran"
+    print(f"\n  Checks run: {checks_run}/{len(DERIVED_CHECKS)}")
+    print(f"  Checks verified by pytest: {checks_verified}/{len(DERIVED_CHECKS)}")
     print()
 
     # Part B: Instruction Diet
@@ -258,9 +276,12 @@ def main():
         "experiment": "55_mistake_to_rule",
         "simulated": False,
         "token_method": "tiktoken" if has_tiktoken else "word_estimate",
+        "tokenizer": TOKENIZER_MODEL,
+        "previous_result_invalidated": "v1 reported 0/4 checks verified due to harness bug: fuzzy pattern-to-task matching returned None for all 4 checks. Fixed in v2 with explicit task_name mapping.",
         "part_a": {
             "failure_patterns": len(FAILURE_LOG),
             "derived_checks": len(DERIVED_CHECKS),
+            "checks_run": checks_run,
             "total_repeats": total_repeats,
             "repeats_blocked": repeats_blocked,
             "block_rate_pct": round(block_rate, 1),
@@ -273,6 +294,7 @@ def main():
             "pass_rate_full": full_pass,
             "pass_rate_pruned": pruned_pass,
             "task_count": len(TASK_SET),
+            "token_note": f"Counted with tiktoken {TOKENIZER_MODEL} (o200k_base). Counts depend on exact text including backtick formatting.",
             "quality_caveat": "Pass rate identical because fixes are predetermined; real quality impact requires LLM calls.",
         },
     }

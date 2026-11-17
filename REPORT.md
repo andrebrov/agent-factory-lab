@@ -1334,38 +1334,50 @@ All 5 panes restored in 312ms with all 15 fields (agent, session_id, flags
 
 ---
 
-### Experiment 55: Mistake-to-Rule Loop + Instruction Diet
+### Experiment 55: Mistake-to-Rule Loop + Instruction Diet (v2, corrected)
+
+> **v1 invalidated:** The original run reported 0/4 checks verified due to a
+> harness bug — fuzzy pattern-to-task matching (`pattern.split("_")[:2]` keyword
+> search) returned `None` for all 4 derived checks, so no check was ever run
+> under pytest. Fixed in v2 with explicit `task_name` mapping and a loud
+> assertion if a check maps to no task.
 
 **Finding:** (a) Turn repeated failures into automated checks. (b) Prune
 always-loaded instructions and measure token reduction.
 
-**Method:** Part A: simulated failure log + real pytest verification.
-Part B: real tiktoken + real pytest.
-**Status: MIXED — token counts MEASURED, block rate SIMULATED, quality
-caveat noted**
+**Method:** Part A: simulated failure log + real pytest verification (v2: all
+4 checks now actually run). Part B: real tiktoken (gpt-4o / o200k_base) +
+real pytest. **Status: MIXED — token counts MEASURED, block rate SIMULATED,
+quality caveat noted**
 
 **Part A: Mistake-to-Rule**
 
-| Metric | Value |
-|---|---|
-| Failure patterns in log | 8 |
-| Derived checks | 4 |
-| Repeat failures blocked (simulated) | **11/20 (55%)** |
-| Checks verified by pytest | **0/4** |
+| Metric | v1 (buggy) | v2 (corrected) |
+|---|---|---|
+| Checks actually run | 0/4 | **4/4** |
+| Checks verified by pytest | 0/4 | **2/4** |
+| Bug detected on buggy code | not tested | **4/4** |
+| Fix confirmed on fixed code | not tested | 2/4 |
+| Repeat failures blocked (simulated) | 11/20 (55%) | 11/20 (55%) |
 
-The 0/4 pytest verification means the pattern-to-test mapping didn't connect
-the derived checks to the right task functions in the sample codebase. The
-55% block rate is simulated from the failure log frequencies, not measured
-end-to-end. The mechanism is sound but needs manual wiring of patterns to
-specific tests.
+The 2 unverified checks (`fix_is_prime`, `fix_binary_search`) correctly detect
+the bug on buggy code (`buggy_fails=True`) but fail `fixed_passes` because
+single-bug fixes in the multi-bug `mathlib.py` still cascade — the same
+limitation seen in exps 37, 43, and 45. The checks themselves are correct;
+the sample codebase's multi-bug design prevents isolated verification.
 
 **Part B: Instruction Diet**
 
 | Metric | Full | Pruned | Savings |
 |---|---|---|---|
-| Instruction tokens | 241 | 62 | **74%** |
+| Instruction tokens | 241 | 62 | **74.3%** |
 | Pass rate (5 tasks) | 3/5 | 3/5 | 0 change |
 | Per-task savings | — | 358 tokens | — |
+
+Token counts: tiktoken gpt-4o (o200k_base encoding). The 241/62 counts
+include markdown backtick formatting in the instruction text. A report of
+212/43 from a different run likely used different instruction text or stripped
+formatting — the exact text is now pinned in the source file.
 
 **Caveat:** Pass rate is identical (3/5 both modes) because the fixes are
 predetermined — pruning instructions doesn't change which fix is applied.
@@ -1515,7 +1527,7 @@ Sample: 5 agents, 12 writes, 15 cards.
 23. **Handoff accept gate** — eliminates silent discards, 100% wasted token reduction (Exp 32)
 24. **Cross-agent review gate** — 5/5 adversarial caught, but 2 false findings, +60% tokens (Exp 53)
 25. **Instruction diet** — 74% instruction token savings; quality impact unknown without LLM calls (Exp 55)
-26. **Mistake-to-rule loop** — 55% repeat failure block rate (simulated); needs manual check wiring (Exp 55)
+26. **Mistake-to-rule loop** — 55% block rate (simulated), 2/4 checks verified by pytest (v2 fix); 2 unverified due to multi-bug cascade (Exp 55)
 
 ### Longer-Term (design-stage / protocol-only)
 

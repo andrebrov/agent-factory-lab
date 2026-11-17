@@ -58,8 +58,8 @@ Additional real measurements (batch 3 — sandboxing):
 
 Simulated/estimated:
 - Cross-agent review gate: 5/5 adversarial caught, 2 false findings, +60% token overhead (pytest measured, review logic simulated, tokens modeled)
-- Mistake-to-rule: 55% repeat-failure block rate (simulated from log); 0/4 checks verified by pytest (pattern-task mapping needs manual wiring)
-- Instruction diet: 74% token savings (measured tiktoken); quality impact unknown (pass rate 3/5 both modes, fixes predetermined)
+- Mistake-to-rule: 55% repeat-failure block rate (simulated from log); 2/4 checks verified by pytest (v2 fix: explicit task mapping; 2 unverified due to multi-bug cascade)
+- Instruction diet: 74% token savings (measured tiktoken gpt-4o/o200k_base, 241→62 tokens); quality impact unknown (pass rate 3/5 both modes, fixes predetermined)
 
 - Writer/reviewer pipeline: +15pp fix rate, -42% defect escapes (Monte Carlo)
 - Agent races: 60% → 91% success rate at 3x cost (Monte Carlo)
