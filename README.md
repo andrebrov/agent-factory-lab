@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (55 experiments)
+## Headline Results (58 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -61,6 +61,10 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | Cross-agent review gate | 5/5 adversarial caught, 2 false findings, +60% tokens | Measured (pytest) + modeled |
 | **Resume-after-restart** | **5/5 panes, 15/15 fields**, 312ms | Measured (tmux) |
 | Instruction diet | **74% token savings**, quality unknown without LLM | Measured (tiktoken) |
+| **Harden the judge** | **3/3 attacks blocked**, 0 false blocks, 6/6 scenarios | Measured (git) |
+| **Per-repo token controller** | **18% savings** (facts+pruning), 40% loop guard | Measured (tiktoken) |
+| **Ownership gate** | **4 conflicts blocked**, 0 false blocks, 100% accuracy | Measured |
+| **Status cards** | **93.3% state accuracy** (14/15), 26-line summary | Measured |
 
 ## Quick Start
 
@@ -76,7 +80,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          55 research findings (markdown, sourced from X + GitHub)
+findings/                          58 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -134,8 +138,11 @@ experiments/
   53_cross_agent_review/           Cross-agent review gate (measured + modeled)
   54_resume_after_restart/         Resume-after-restart for panes (measured)
   55_mistake_to_rule/              Mistake-to-rule + instruction diet (mixed)
+  56_harden_judge/                 Tamper-proof review rules (measured)
+  57_token_controller/             Per-repo facts + tool pruning (measured)
+  58_ownership_cards/              Agent ownership + status cards (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 55 experiments end-to-end
+run_all.sh                         Run all 58 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

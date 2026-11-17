@@ -263,8 +263,20 @@ echo "── Experiment 55: Mistake-to-Rule ──"
 python3 experiments/55_mistake_to_rule/run.py
 echo ""
 
+echo "── Experiment 56: Harden the Judge ──"
+python3 experiments/56_harden_judge/run.py
+echo ""
+
+echo "── Experiment 57: Token Controller ──"
+python3 experiments/57_token_controller/run.py
+echo ""
+
+echo "── Experiment 58: Ownership Cards ──"
+python3 experiments/58_ownership_cards/run.py
+echo ""
+
 echo "=============================================="
-echo "All 55 experiments complete. See results.json"
+echo "All 58 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

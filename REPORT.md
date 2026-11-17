@@ -8,14 +8,15 @@
 
 ## Overview
 
-Fifty-five research findings about coding-agent improvements were collected
-from X and GitHub (in thirteen batches), documented in `findings/`, and tested
-via runnable experiments. **Thirty-nine experiments produce real measurements**
+Fifty-eight research findings about coding-agent improvements were collected
+from X and GitHub (in fourteen batches), documented in `findings/`, and tested
+via runnable experiments. **Forty-two experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
-proof-of-done gates, cross-agent review, pane restart, mistake-to-rule);
-sixteen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+proof-of-done gates, cross-agent review, pane restart, mistake-to-rule,
+hardened judge, token controller, ownership cards); sixteen use simulated
+or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1372,6 +1373,88 @@ Real quality impact requires actual LLM calls with each instruction set.
 
 ---
 
+## Nov 17 Digest Experiments (Findings 56–58)
+
+### Experiment 56: Harden the Judge
+
+**Finding:** Load review rules from the base branch (not PR branch), pin
+approvals to commit SHAs, escalate after 3 failed rounds.
+
+**Method:** Real git branching with crafted attack/clean scenarios.
+**Status: MEASURED (git)**
+
+| Metric | Value |
+|---|---|
+| Attacks blocked | **3/3** (tamper rules, inject rules, stale approval) |
+| False blocks on clean PRs | **0** |
+| Escalation works | **Yes** (round 3) |
+| All scenarios correct | **6/6** |
+
+Sample: 6 scenarios (3 attack, 2 clean, 1 escalation). The gate correctly
+loads rules from `main`, detects SHA mismatch after a new push, and escalates
+after 3 rounds.
+
+---
+
+### Experiment 57: Per-Repo Token Controller
+
+**Finding:** Inject per-repo facts, prune unused tools, stop non-improving
+loops.
+
+**Method:** Real tiktoken, real pytest for pass rate.
+**Status: MEASURED (tiktoken + pytest)**
+
+| Mode | Tokens/Task | vs Baseline |
+|---|---|---|
+| Baseline (all tools, no facts) | 1,395 | — |
+| **Controller (facts + pruned)** | **1,144** | **-18.0%** |
+| Controller + cached | 883 | -36.7% |
+| Loop guard (3 rounds vs 5) | 4,185 | -40.0% |
+
+Facts injection costs 99 tokens; tool pruning saves 350 tokens (6 unused
+tools removed). Pass rate: 3/5 (same as baseline — same fixes applied).
+Sample: 5 tasks, 10 tools. Compared with exp 42's efficiency stack (2,689
+tokens/task), this controller achieves 1,144 — a further 57% reduction
+(different experimental setup, not directly comparable).
+
+**Caveat:** The 18% saving is from pruning tool definitions and adding facts.
+The controller doesn't change the fix or the model call — it changes what's
+in the prompt. Quality impact requires real LLM calls.
+
+---
+
+### Experiment 58: Ownership + Status Cards
+
+**Finding:** Agents declare file/branch ownership; writes without handoff are
+blocked. One-line status cards roll up into a morning summary.
+
+**Method:** Ownership logic on concrete write scenarios, state detection on
+labeled cards. **Status: MEASURED**
+
+**Part A: Ownership**
+
+| Metric | Value |
+|---|---|
+| Write attempts | 12 |
+| Conflicts correctly blocked | **4** |
+| False blocks | **0** |
+| Accuracy | **100%** (12/12) |
+| Handoff override | Works (1 test) |
+
+**Part B: Status Cards**
+
+| Metric | Value |
+|---|---|
+| Cards tested | 15 |
+| State detection accuracy | **93.3%** (14/15) |
+| Summary | 26 lines |
+
+The 1 misclassification: a card with blocker="none" and next_step containing
+"done" but true_state="running" — the heuristic matched "done" in the text.
+Sample: 5 agents, 12 writes, 15 cards.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1414,6 +1497,9 @@ Real quality impact requires actual LLM calls with each instruction set.
 36. **Use compact dashboard for review** — 88% fewer tokens vs scrollback (Exp 51)
 37. **Add proof-of-done gate** — 4/4 false claims caught, 0 false flags, 160ms (Exp 52)
 38. **Resume-after-restart** — 5/5 panes restored, 15/15 fields intact, 312ms (Exp 54)
+39. **Harden the judge** — 3/3 attacks blocked, 0 false blocks, escalation works (Exp 56)
+40. **Ownership gate** — 4 conflicts blocked, 0 false blocks, 100% accuracy (Exp 58)
+41. **Per-repo token controller** — 18% savings from facts+pruning (Exp 57)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
