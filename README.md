@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (58 experiments)
+## Headline Results (61 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -65,6 +65,10 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Per-repo token controller** | **18% savings** (facts+pruning), 40% loop guard | Measured (tiktoken) |
 | **Ownership gate** | **4 conflicts blocked**, 0 false blocks, 100% accuracy | Measured |
 | **Status cards** | **93.3% state accuracy** (14/15), 26-line summary | Measured |
+| **Handoff vs compact** | **35% savings** vs keep-going, 2pp better than compact | Measured sizes + simulated exec |
+| **Watcher done-gate** | **100% accuracy** (20/20), 8/8 errors, 0 false pos, 7/7 tricky | Measured |
+| **Plan gate** | **5/5 bad caught**, 5/5 good passed, 0 false blocks | Measured |
+| **Read-deny rules** | **95% token savings** (70.5K/74.6K denied), 0 needed blocked | Measured (tiktoken) |
 
 ## Quick Start
 
@@ -80,7 +84,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          58 research findings (markdown, sourced from X + GitHub)
+findings/                          61 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -141,8 +145,11 @@ experiments/
   56_harden_judge/                 Tamper-proof review rules (measured)
   57_token_controller/             Per-repo facts + tool pruning (measured)
   58_ownership_cards/              Agent ownership + status cards (measured)
+  59_handoff_vs_compact/           Handoff vs compact vs keep-going (measured + simulated)
+  60_watcher_gate/                 Watcher pane done-gate + tab resume (measured)
+  61_plan_gate/                    Plan gate + read-deny context hygiene (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 58 experiments end-to-end
+run_all.sh                         Run all 61 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

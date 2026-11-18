@@ -275,8 +275,20 @@ echo "── Experiment 58: Ownership Cards ──"
 python3 experiments/58_ownership_cards/run.py
 echo ""
 
+echo "── Experiment 59: Handoff vs Compact ──"
+python3 experiments/59_handoff_vs_compact/run.py
+echo ""
+
+echo "── Experiment 60: Watcher Gate ──"
+python3 experiments/60_watcher_gate/run.py
+echo ""
+
+echo "── Experiment 61: Plan Gate ──"
+python3 experiments/61_plan_gate/run.py
+echo ""
+
 echo "=============================================="
-echo "All 58 experiments complete. See results.json"
+echo "All 61 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

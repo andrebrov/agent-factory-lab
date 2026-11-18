@@ -8,15 +8,15 @@
 
 ## Overview
 
-Fifty-eight research findings about coding-agent improvements were collected
-from X and GitHub (in fourteen batches), documented in `findings/`, and tested
-via runnable experiments. **Forty-two experiments produce real measurements**
+Sixty-one research findings about coding-agent improvements were collected
+from X and GitHub (in fifteen batches), documented in `findings/`, and tested
+via runnable experiments. **Forty-five experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
 proof-of-done gates, cross-agent review, pane restart, mistake-to-rule,
-hardened judge, token controller, ownership cards); sixteen use simulated
-or estimated data (Monte Carlo, cost modeling, protocol-only,
+hardened judge, token controller, ownership cards, handoff-vs-compact,
+watcher gates, plan gates); sixteen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1467,6 +1467,90 @@ Sample: 5 agents, 12 writes, 15 cards.
 
 ---
 
+## Nov 18 Digest Experiments (Findings 59–61)
+
+### Experiment 59: Handoff Instead of Compacting
+
+**Finding:** At ~60% context, write a short handoff.md and start a fresh
+pane instead of compacting or continuing.
+
+**Method:** Real tiktoken for sizes, simulated execution model (13-step task,
+16K context window). **Status: sizes MEASURED, execution SIMULATED**
+
+| Mode | Total Input | Savings | Handoffs | Final Context |
+|---|---|---|---|---|
+| Keep going | 102,200 | baseline | 0 | 13,350 |
+| Compact at 60% | 69,000 | **32.5%** | 0 (1 compact) | 5,050 |
+| **Hand off at 60%** | **66,512** | **34.9%** | 1 | **4,428** |
+
+Handoff saves 35% vs keep-going and 2pp more than compaction. The handoff.md
+is 53 tokens; the fresh pane starts at 1,078 tokens (system + handoff + file)
+vs the original's 13,350. Old-chat fraction at task end: 96%.
+
+**Caveat:** 1 synthetic task, simulated step costs. Real savings depend on task
+length and actual token distribution. The 47% cited claim vs our 96% old-chat
+fraction reflects different task structures.
+
+---
+
+### Experiment 60: Watcher Pane Done-Gate + Tab Resume
+
+**Finding:** Read watcher pane output before marking done. Block on real
+errors, pass on warnings and error-in-filename false positives.
+
+**Method:** Pattern matching on 20 labeled samples, real tmux for tab resume.
+**Status: MEASURED**
+
+| Metric | Value |
+|---|---|
+| Watcher accuracy | **100%** (20/20) |
+| Errors caught | **8/8** |
+| False positives | **0** |
+| Tricky cases handled | **7/7** (warnings, error-in-name, old errors, URL path) |
+| Tab resume | **3/3**, 36ms |
+
+**Caveat:** 20 hand-crafted samples with 7 tricky cases. Real watcher output
+may contain patterns not in the test set. The 100% accuracy is on this sample;
+production would need a larger, more diverse test corpus. The old-error-scrolled-
+past case is handled by the ignore pattern, but a more sophisticated approach
+(e.g., timestamp-based) would be more robust.
+
+---
+
+### Experiment 61: Plan Gate + Context Hygiene
+
+**Finding:** (a) Review plans before code edits. (b) Deny reads of lockfiles,
+fixtures, and generated files.
+
+**Method:** Pattern matching for plans, token counting for deny rules.
+**Status: MEASURED (tiktoken + pattern matching)**
+
+**Part A: Plan Gate**
+
+| Metric | Value |
+|---|---|
+| Bad plans caught | **5/5** |
+| Good plans passed | **5/5** |
+| False blocks | **0** |
+
+**Part B: Read-Deny Rules**
+
+| Metric | Value |
+|---|---|
+| Total project tokens | 74,560 |
+| Denied tokens | 70,500 (**94.6%**) |
+| Needed files wrongly blocked | **0** |
+| Top denied: generated | 29,000 tokens |
+| Top denied: lockfiles | 27,000 tokens |
+
+**Caveat:** Plans are hand-crafted (5 good, 5 bad). The deny rules save 95%
+because the sample project has large lockfiles and generated bundles —
+typical for JS projects but less dramatic for Python-only repos. 0 needed
+files blocked because the deny patterns were designed to match the sample;
+real projects might need tuning.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1512,6 +1596,10 @@ Sample: 5 agents, 12 writes, 15 cards.
 39. **Harden the judge** — 3/3 attacks blocked, 0 false blocks, escalation works (Exp 56)
 40. **Ownership gate** — 4 conflicts blocked, 0 false blocks, 100% accuracy (Exp 58)
 41. **Per-repo token controller** — 18% savings from facts+pruning (Exp 57)
+42. **Watcher pane done-gate** — 8/8 errors caught, 0 false positives, 7/7 tricky (Exp 60)
+43. **Plan gate** — 5/5 bad plans caught, 0 false blocks (Exp 61)
+44. **Read-deny rules** — 95% token savings, 0 needed files blocked (Exp 61)
+45. **Handoff instead of compact** — 35% token savings vs keep-going (Exp 59)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
