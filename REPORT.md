@@ -8,15 +8,16 @@
 
 ## Overview
 
-Sixty-one research findings about coding-agent improvements were collected
-from X and GitHub (in fifteen batches), documented in `findings/`, and tested
-via runnable experiments. **Forty-five experiments produce real measurements**
+Sixty-four research findings about coding-agent improvements were collected
+from X and GitHub (in sixteen batches), documented in `findings/`, and tested
+via runnable experiments. **Forty-seven experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
 proof-of-done gates, cross-agent review, pane restart, mistake-to-rule,
 hardened judge, token controller, ownership cards, handoff-vs-compact,
-watcher gates, plan gates); sixteen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+watcher gates, plan gates, untrusted repo gates, needs-you views);
+seventeen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1551,6 +1552,87 @@ real projects might need tuning.
 
 ---
 
+## Nov 19 Digest Experiments (Findings 62–64)
+
+### Experiment 62: Untrusted Repo Gate
+
+**Finding:** Scan CLAUDE.md/AGENTS.md for hidden injections, block credential
+reads, hold untrusted repos for review.
+
+**Method:** 12 repos (6 attack, 6 clean), attack samples written independently
+of scanner patterns. **Status: MEASURED (file scanning)**
+
+| Metric | Value |
+|---|---|
+| Injections caught | **6/6** (HTML comment, zero-width, base64, disguised curl, unicode confusable, policy override) |
+| False holds on clean repos | **0/6** |
+| Credential reads blocked | **8/8** (100%) |
+
+The scanner uses general regex patterns, not fitted to the attack samples.
+6 techniques tested: HTML comments with instructions, zero-width characters,
+base64-encoded payloads, curl piped to shell disguised as setup, Cyrillic
+lookalike characters, and polite policy-override language.
+
+**Caveat:** 12 repos is a small sample. The scanner's 100% accuracy benefits
+from the attack samples using well-known injection patterns. Novel or
+obfuscated attacks might evade detection. The attacks and scanner were written
+in the same session (same author) which may introduce unconscious bias despite
+the separation effort.
+
+---
+
+### Experiment 63: Cache-Hit Tracking + Prompt Ordering
+
+**Finding:** Prompt ordering determines cache-hit rate. Stable content first
+maximizes caching; mixed ordering destroys it.
+
+**Method:** Token counts measured (tiktoken), cache behavior modeled (no real
+API cache). **Status: token sizes MEASURED, cache MODELED**
+
+| Ordering | Cache Rate | Cost Savings |
+|---|---|---|
+| **Stable first** | **91.2%** | **82.1%** |
+| Mixed | 8.8% | 8.0% |
+| Changing first | 0.0% | 0.0% |
+
+| Tool Calls | Tokens | Savings |
+|---|---|---|
+| Sequential (4 calls) | 510 | baseline |
+| **Chained (1 script)** | **142** | **72.2%** |
+
+**Caveat:** Cache behavior is modeled from prompt structure, not measured
+against a real API endpoint. The 82% savings assumes the provider caches
+the exact prefix; real cache granularity varies. Sample: 15-turn session.
+
+---
+
+### Experiment 64: Cross-Machine 'Needs You' View
+
+**Finding:** Rank panes across machines by urgency using structured state
+(not text heuristics — fixes exp 58's keyword bug).
+
+**Method:** Structured state ranking on 16 labeled panes across 4 machines.
+**Status: MEASURED**
+
+| Metric | Value |
+|---|---|
+| Ranking accuracy | **100%** (16/16) |
+| Top-5 all need action | **Yes** |
+| Action items identified | **6/16** panes |
+| Scan for first action | **1** (ranked) vs 16 (flat) |
+| Summary | 23 lines |
+
+Uses structured state fields (`error`, `blocked`, `waiting-for-input`, etc.)
+with explicit urgency levels instead of text matching. This avoids the
+exp 58 false positive where "done" in a status string was misclassified.
+
+**Caveat:** 16 panes across 4 machines with hand-labeled states. The 100%
+accuracy comes from using explicit state fields rather than text parsing —
+real agents would need reliable state reporting (like exp 40's structured
+report protocol).
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1600,6 +1682,8 @@ real projects might need tuning.
 43. **Plan gate** — 5/5 bad plans caught, 0 false blocks (Exp 61)
 44. **Read-deny rules** — 95% token savings, 0 needed files blocked (Exp 61)
 45. **Handoff instead of compact** — 35% token savings vs keep-going (Exp 59)
+46. **Untrusted repo gate** — 6/6 injections caught, 0 false holds, 8/8 credentials blocked (Exp 62)
+47. **Cross-machine needs-you view** — 100% ranking accuracy, 1 vs 16 scan (Exp 64)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -1616,6 +1700,8 @@ real projects might need tuning.
 24. **Cross-agent review gate** — 5/5 adversarial caught, but 2 false findings, +60% tokens (Exp 53)
 25. **Instruction diet** — 74% instruction token savings; quality impact unknown without LLM calls (Exp 55)
 26. **Mistake-to-rule loop** — 55% block rate (simulated), 2/4 checks verified by pytest (v2 fix); 2 unverified due to multi-bug cascade (Exp 55)
+27. **Stable-first prompt ordering** — 91% modeled cache rate, 82% savings (Exp 63)
+28. **Chained tool calls** — 72% token savings vs sequential (Exp 63, modeled)
 
 ### Longer-Term (design-stage / protocol-only)
 

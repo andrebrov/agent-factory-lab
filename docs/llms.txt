@@ -1,10 +1,10 @@
 # Agent Factory Lab
 
-> Open research lab with 61 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
+> Open research lab with 64 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
 
 This site documents research findings and experiment results for improving two AI coding agents: Gwaihir (orchestrator for herdr, a multi-agent coding tool) and Landroval (orchestrator for Rex, a coding factory).
 
-## Key Results (45 real measurements, 16 simulated/estimated)
+## Key Results (47 real measurements, 17 simulated/estimated)
 
 Real measurements:
 - Batched tool calls: 94.5% token reduction, 90% fewer requests (tiktoken)
@@ -59,8 +59,12 @@ Additional real measurements (batch 3 — sandboxing):
 - Watcher done-gate: 100% accuracy (20/20), 8/8 errors caught, 0 false positives, 7/7 tricky cases (pattern matching)
 - Plan gate: 5/5 bad plans caught, 5/5 good passed, 0 false blocks (pattern matching)
 - Read-deny rules: 95% token savings (70.5K/74.6K denied), 0 needed files blocked (tiktoken)
+- Untrusted repo gate: 6/6 injections caught, 0/6 false holds, 8/8 credentials blocked (file scanning, attacks written independently)
+- Cross-machine needs-you view: 100% ranking accuracy (16/16 panes, 4 machines), 6 action items identified (structured state)
 
 Simulated/estimated:
+- Cache-hit tracking + prompt ordering: stable-first 91.2% cache rate / 82.1% savings, mixed 8.8%, changing-first 0% (modeled, tiktoken sizes measured)
+- Chained tool calls: 72.2% token savings vs sequential (modeled)
 - Cross-agent review gate: 5/5 adversarial caught, 2 false findings, +60% token overhead (pytest measured, review logic simulated, tokens modeled)
 - Mistake-to-rule: 55% repeat-failure block rate (simulated from log); 2/4 checks verified by pytest (v2 fix: explicit task mapping; 2 unverified due to multi-bug cascade)
 - Instruction diet: 74% token savings (measured tiktoken gpt-4o/o200k_base, 241→62 tokens); quality impact unknown (pass rate 3/5 both modes, fixes predetermined)

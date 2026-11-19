@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (61 experiments)
+## Headline Results (64 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -69,6 +69,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Watcher done-gate** | **100% accuracy** (20/20), 8/8 errors, 0 false pos, 7/7 tricky | Measured |
 | **Plan gate** | **5/5 bad caught**, 5/5 good passed, 0 false blocks | Measured |
 | **Read-deny rules** | **95% token savings** (70.5K/74.6K denied), 0 needed blocked | Measured (tiktoken) |
+| **Untrusted repo gate** | **6/6 injections caught**, 0 false holds, 8/8 creds blocked | Measured (scanning) |
+| Stable-first prompt ordering | **91% cache rate**, 82% cost savings (modeled) | Modeled (tiktoken sizes) |
+| **Needs-you view** | **100% ranking** (16/16), 1 vs 16 scan for first action | Measured |
 
 ## Quick Start
 
@@ -84,7 +87,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          61 research findings (markdown, sourced from X + GitHub)
+findings/                          64 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -148,8 +151,11 @@ experiments/
   59_handoff_vs_compact/           Handoff vs compact vs keep-going (measured + simulated)
   60_watcher_gate/                 Watcher pane done-gate + tab resume (measured)
   61_plan_gate/                    Plan gate + read-deny context hygiene (measured)
+  62_untrusted_repo_gate/          Injection scanner + credential block (measured)
+  63_cache_hit_tracking/           Cache-hit tracking + prompt ordering (modeled)
+  64_needs_you_view/               Cross-machine urgency ranking (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 61 experiments end-to-end
+run_all.sh                         Run all 64 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

@@ -287,8 +287,20 @@ echo "── Experiment 61: Plan Gate ──"
 python3 experiments/61_plan_gate/run.py
 echo ""
 
+echo "── Experiment 62: Untrusted Repo Gate ──"
+python3 experiments/62_untrusted_repo_gate/run.py
+echo ""
+
+echo "── Experiment 63: Cache-Hit Tracking ──"
+python3 experiments/63_cache_hit_tracking/run.py
+echo ""
+
+echo "── Experiment 64: Needs You View ──"
+python3 experiments/64_needs_you_view/run.py
+echo ""
+
 echo "=============================================="
-echo "All 61 experiments complete. See results.json"
+echo "All 64 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
