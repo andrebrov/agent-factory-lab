@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (64 experiments)
+## Headline Results (67 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -72,6 +72,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Untrusted repo gate** | **6/6 injections caught**, 0 false holds, 8/8 creds blocked | Measured (scanning) |
 | Stable-first prompt ordering | **91% cache rate**, 82% cost savings (modeled) | Modeled (tiktoken sizes) |
 | **Needs-you view** | **100% ranking** (16/16), 1 vs 16 scan for first action | Measured |
+| **Agent inbox** | **7/7 surfaced**, 0 missed, blocking-first | Measured (minimal equiv) |
+| Token budget per worker | **90% savings** with shared summary (5/5 facts kept) | Measured sizes + modeled |
+| Branch review | **2/2 bugs, 0 false flags**, 160 tokens avg | Measured git+pytest, rule-based reviewer |
 
 ## Quick Start
 
@@ -87,7 +90,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          64 research findings (markdown, sourced from X + GitHub)
+findings/                          67 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -154,8 +157,11 @@ experiments/
   62_untrusted_repo_gate/          Injection scanner + credential block (measured)
   63_cache_hit_tracking/           Cache-hit tracking + prompt ordering (modeled)
   64_needs_you_view/               Cross-machine urgency ranking (measured)
+  65_agent_inbox/                  Agent inbox for human replies (measured)
+  66_token_budget/                 Token budget per worker (measured + modeled)
+  67_branch_review/                Whole-branch review before done (measured, rule-based)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 64 experiments end-to-end
+run_all.sh                         Run all 67 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

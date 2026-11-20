@@ -8,16 +8,16 @@
 
 ## Overview
 
-Sixty-four research findings about coding-agent improvements were collected
-from X and GitHub (in sixteen batches), documented in `findings/`, and tested
-via runnable experiments. **Forty-seven experiments produce real measurements**
+Sixty-seven research findings about coding-agent improvements were collected
+from X and GitHub (in seventeen batches), documented in `findings/`, and tested
+via runnable experiments. **Forty-nine experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
 proof-of-done gates, cross-agent review, pane restart, mistake-to-rule,
 hardened judge, token controller, ownership cards, handoff-vs-compact,
-watcher gates, plan gates, untrusted repo gates, needs-you views);
-seventeen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+watcher gates, plan gates, untrusted repo gates, needs-you views, inboxes,
+branch review); eighteen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1633,6 +1633,82 @@ report protocol).
 
 ---
 
+## Nov 20 Digest Experiments (Findings 65–67)
+
+### Experiment 65: Agent Inbox
+
+**Finding:** A message-level inbox where agents post questions, reviews, and
+results. Human replies when available. Minimal equivalent (Plannotator not
+installable in this headless VM).
+
+**Method:** Inbox logic on 15 labeled messages. **Status: MEASURED**
+
+| Metric | Value |
+|---|---|
+| Items needing reply surfaced | **7/7** (0 missed) |
+| Blocking questions at top | **Yes** |
+| Steps per reply | 2 (read + respond) |
+
+Complementary to exp 64: inbox handles message-level granularity and reply
+tracking; needs-you view handles cross-machine pane states. Sample: 15
+messages, 5 agents.
+
+**Caveat:** Plannotator itself was not tested. The minimal equivalent lacks
+browser UI, agent hooks, and Rex integration. 15 hand-crafted messages.
+
+---
+
+### Experiment 66: Token Budget per Worker
+
+**Finding:** Cap concurrent subagents, share file summaries, load only needed
+tools. Model cache loss from model switching.
+
+**Method:** Token sizes measured (tiktoken), concurrency modeled.
+**Status: sizes MEASURED, concurrency MODELED**
+
+| Mode | Tokens | Savings |
+|---|---|---|
+| A: Parallel (each reads all) | 8,133 | baseline |
+| **B: Capped (shared summary)** | **833** | **89.8%** |
+
+| Check | Result |
+|---|---|
+| Summary retains key facts | **5/5** |
+| Model switch cache loss | 327 tokens (modeled) |
+
+**Caveat:** The 90% savings is dramatic because 3 subagents each re-reading
+2,153 tokens of files is 6,459 tokens of pure duplication. The summary (59
+tokens) drops detail — it has file names and sizes but not content. A
+subagent needing actual code would still need to read the file. The summary
+is a routing aid, not a replacement for reads. Sample: 3 subagents, 5 files.
+
+---
+
+### Experiment 67: Whole-Branch Review Before Done
+
+**Finding:** Review the entire branch diff (not just last commit) before
+marking done. Rule-based reviewer (not a real LLM — same caveat as exp 53).
+
+**Method:** Real git + pytest on 4 branches. **Status: git+pytest MEASURED,
+reviewer logic is RULE-BASED (not LLM)**
+
+| Metric | Value |
+|---|---|
+| Buggy branches caught | **2/2** |
+| False flags on clean | **0/2** |
+| Total review tokens | 642 (160 avg) |
+
+The cross-file rename bug (factorial renamed in mathlib.py but not in
+caller.py) was caught by both the rule and the failing tests. The behavior
+change (mean returns 0 instead of raising) was caught by failing tests.
+
+**Caveat:** 4 branches (2 buggy, 2 clean) is a small sample. The reviewer
+is rule-based with 3 rules written for these specific bug types — a real LLM
+reviewer would catch different things. The 160-token average review cost is
+just the diff size, not the cost of an LLM reviewing it.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1684,6 +1760,7 @@ report protocol).
 45. **Handoff instead of compact** — 35% token savings vs keep-going (Exp 59)
 46. **Untrusted repo gate** — 6/6 injections caught, 0 false holds, 8/8 credentials blocked (Exp 62)
 47. **Cross-machine needs-you view** — 100% ranking accuracy, 1 vs 16 scan (Exp 64)
+48. **Agent inbox** — 7/7 surfaced, 0 missed, blocking-first sorting (Exp 65)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -1702,6 +1779,8 @@ report protocol).
 26. **Mistake-to-rule loop** — 55% block rate (simulated), 2/4 checks verified by pytest (v2 fix); 2 unverified due to multi-bug cascade (Exp 55)
 27. **Stable-first prompt ordering** — 91% modeled cache rate, 82% savings (Exp 63)
 28. **Chained tool calls** — 72% token savings vs sequential (Exp 63, modeled)
+29. **Token budget per worker** — 90% savings with shared summary (Exp 66, modeled concurrency)
+30. **Whole-branch review** — 2/2 bugs caught, 0 false flags, rule-based (Exp 67)
 
 ### Longer-Term (design-stage / protocol-only)
 

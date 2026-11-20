@@ -299,8 +299,20 @@ echo "── Experiment 64: Needs You View ──"
 python3 experiments/64_needs_you_view/run.py
 echo ""
 
+echo "── Experiment 65: Agent Inbox ──"
+python3 experiments/65_agent_inbox/run.py
+echo ""
+
+echo "── Experiment 66: Token Budget ──"
+python3 experiments/66_token_budget/run.py
+echo ""
+
+echo "── Experiment 67: Branch Review ──"
+python3 experiments/67_branch_review/run.py
+echo ""
+
 echo "=============================================="
-echo "All 64 experiments complete. See results.json"
+echo "All 67 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
