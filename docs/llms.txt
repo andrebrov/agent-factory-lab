@@ -1,10 +1,10 @@
 # Agent Factory Lab
 
-> Open research lab with 67 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
+> Open research lab with 70 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
 
 This site documents research findings and experiment results for improving two AI coding agents: Gwaihir (orchestrator for herdr, a multi-agent coding tool) and Landroval (orchestrator for Rex, a coding factory).
 
-## Key Results (49 real measurements, 18 simulated/estimated)
+## Key Results (51 real measurements, 19 simulated/estimated)
 
 Real measurements:
 - Batched tool calls: 94.5% token reduction, 90% fewer requests (tiktoken)
@@ -63,8 +63,11 @@ Additional real measurements (batch 3 — sandboxing):
 - Cross-machine needs-you view: 100% ranking accuracy (16/16 panes, 4 machines), 6 action items identified (structured state)
 - Agent inbox: 7/7 items surfaced, 0 missed, blocking-first sorting (minimal equivalent, Plannotator not tested)
 - Branch review: 2/2 buggy branches caught, 0/2 false flags, 642 tokens total (rule-based reviewer, not LLM)
+- Done-needs-test-count gate: 8/8 incomplete caught, 1 false reject, 15/16 accuracy (16 labeled reports, written independently of gate)
+- Shared repo map (with real reads): 32.6% savings (10,440→7,034 tokens), lanes read actual file content not just names (corrects exp 66; tiktoken)
 
 Simulated/estimated:
+- Token policy: 59% input reduction, 79% cost reduction (Haiku for coding, Opus for planning, scout subagents); quality impact UNKNOWN — no real LLM calls
 - Token budget per worker: 90% savings with shared summary vs parallel duplication (tiktoken sizes measured, concurrency modeled)
 - Cache-hit tracking + prompt ordering: stable-first 91.2% cache rate / 82.1% savings, mixed 8.8%, changing-first 0% (modeled, tiktoken sizes measured)
 - Chained tool calls: 72.2% token savings vs sequential (modeled)

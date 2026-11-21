@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (67 experiments)
+## Headline Results (70 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -75,6 +75,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Agent inbox** | **7/7 surfaced**, 0 missed, blocking-first | Measured (minimal equiv) |
 | Token budget per worker | **90% savings** with shared summary (5/5 facts kept) | Measured sizes + modeled |
 | Branch review | **2/2 bugs, 0 false flags**, 160 tokens avg | Measured git+pytest, rule-based reviewer |
+| Token policy (session+model+scouts) | 59% input, **79% cost** reduction (quality unknown) | Modeled (no LLM calls) |
+| **Done-needs-test-count gate** | **8/8 incomplete caught**, 1 false reject | Measured (16 reports) |
+| **Shared repo map (real reads)** | **33% savings**, lanes still read needed files | Measured (tiktoken) |
 
 ## Quick Start
 
@@ -90,7 +93,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          67 research findings (markdown, sourced from X + GitHub)
+findings/                          70 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -160,8 +163,11 @@ experiments/
   65_agent_inbox/                  Agent inbox for human replies (measured)
   66_token_budget/                 Token budget per worker (measured + modeled)
   67_branch_review/                Whole-branch review before done (measured, rule-based)
+  68_token_policy/                 Token policy for workers (modeled, no LLM)
+  69_done_test_count/              Done-needs-test-count gate (measured)
+  70_shared_repo_map/              Shared repo map with real file reads (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 67 experiments end-to-end
+run_all.sh                         Run all 70 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

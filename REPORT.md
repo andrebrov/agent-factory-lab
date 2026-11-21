@@ -8,16 +8,17 @@
 
 ## Overview
 
-Sixty-seven research findings about coding-agent improvements were collected
-from X and GitHub (in seventeen batches), documented in `findings/`, and tested
-via runnable experiments. **Forty-nine experiments produce real measurements**
+Seventy research findings about coding-agent improvements were collected
+from X and GitHub (in eighteen batches), documented in `findings/`, and tested
+via runnable experiments. **Fifty-one experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
 proof-of-done gates, cross-agent review, pane restart, mistake-to-rule,
 hardened judge, token controller, ownership cards, handoff-vs-compact,
 watcher gates, plan gates, untrusted repo gates, needs-you views, inboxes,
-branch review); eighteen use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+branch review, done-test-count gates, shared repo maps); nineteen use
+simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1709,6 +1710,90 @@ just the diff size, not the cost of an LLM reviewing it.
 
 ---
 
+## Nov 21 Digest Experiments (Findings 68–70)
+
+### Experiment 68: Token Policy for herdr Workers
+
+**Finding:** Four-part policy: compact at fixed limit, clear between tasks,
+cheap model for coding with Opus for planning only, scout subagents for reads.
+
+**Method:** Token sizes measured (tiktoken), costs modeled from public pricing.
+**Status: token sizes MEASURED, costs MODELED, quality impact UNKNOWN (no LLM calls)**
+
+| Metric | Baseline (all Opus) | Policy |
+|---|---|---|
+| Total input tokens | 11,724 | 4,810 |
+| **Input reduction** | — | **59%** |
+| Cost (modeled) | $0.429 | $0.088 |
+| **Cost reduction** | — | **79.5%** |
+
+The savings come from two sources: (1) clearing the session between tasks
+eliminates context growth (59% input reduction), (2) Haiku for coding + Opus
+for planning only drops per-token cost (79.5% total).
+
+**Caveat:** No real LLM calls. We measured token volumes but not quality.
+Haiku may not produce correct fixes. Scout summaries (120 tokens) may lose
+detail the worker needs. The 79.5% cost saving is meaningless if Haiku's
+fixes fail. Sample: 3 tasks on a small codebase.
+
+---
+
+### Experiment 69: "Done" Needs a Test Count
+
+**Finding:** Require "N/M tests passed" in done reports. Reject reports with
+no count or single-file-only counts.
+
+**Method:** Gate logic on 16 labeled reports, written independently of the
+gate rules. **Status: MEASURED**
+
+| Metric | Value |
+|---|---|
+| Accuracy | **15/16** (93.8%) |
+| Incomplete runs caught | **8/8** (100%) |
+| False rejects | **1** ("10 passed out of 10" — the "N out of M" variant wasn't matched) |
+| False accepts | **0** |
+
+The 1 false reject is on "pytest: 10 passed out of 10. All green." — the
+regex matches "N/M" and "N of M" but missed "N passed out of M" as a
+three-word phrase. This is a gate bug, not a data issue.
+
+**Caveat:** 16 hand-labeled reports. The reports were written before the gate
+rules, but by the same author — unconscious alignment is possible despite
+the separation effort. The false-reject pattern is fixable but wasn't
+corrected to keep the experiment honest.
+
+---
+
+### Experiment 70: Shared Repo Map (with Real File Reads)
+
+**Finding:** A detailed repo map (function signatures, imports, key patterns)
+lets lanes skip reading files they don't need. Both baseline and treatment
+include real file-content reads — correcting exp 66's gap.
+
+**Method:** Real tiktoken on actual file contents and a detailed map.
+**Status: MEASURED (tiktoken)**
+
+| Metric | Baseline | Treatment | Savings |
+|---|---|---|---|
+| Total tokens (3 lanes, 5 tasks) | 10,440 | 7,034 | **32.6%** |
+| Map overhead (per lane) | 0 | 626 | — |
+| Lanes read needed files | yes | **yes** | — |
+| Lanes read ALL files | yes | **no** | — |
+| Files missing from map | 0 | 0 | — |
+
+The 32.6% is much lower than exp 66's 90% because this experiment honestly
+counts the file reads that lanes still need. The map (626 tokens) contains
+function signatures and patterns, not just names. Lanes that need 2 of 3
+files save ~600 tokens per task; a lane needing all 3 files saves nothing
+(just the map overhead).
+
+**Caveat:** 3 files is a tiny codebase. On a larger repo with 50+ files
+where each lane needs 2–3, the savings would be proportionally larger.
+On a 3-file repo, most lanes already need most files — the map mainly
+helps the lane that needs only 1 file. Sample: 3 lanes, 3 files, 5 tasks.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1761,6 +1846,8 @@ just the diff size, not the cost of an LLM reviewing it.
 46. **Untrusted repo gate** — 6/6 injections caught, 0 false holds, 8/8 credentials blocked (Exp 62)
 47. **Cross-machine needs-you view** — 100% ranking accuracy, 1 vs 16 scan (Exp 64)
 48. **Agent inbox** — 7/7 surfaced, 0 missed, blocking-first sorting (Exp 65)
+49. **Done-needs-test-count gate** — 8/8 incomplete caught, 1 false reject (Exp 69)
+50. **Shared repo map (with real reads)** — 33% savings, includes actual file reads (Exp 70)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -1781,6 +1868,7 @@ just the diff size, not the cost of an LLM reviewing it.
 28. **Chained tool calls** — 72% token savings vs sequential (Exp 63, modeled)
 29. **Token budget per worker** — 90% savings with shared summary (Exp 66, modeled concurrency)
 30. **Whole-branch review** — 2/2 bugs caught, 0 false flags, rule-based (Exp 67)
+31. **Token policy (session-clear + cheap model + scouts)** — 79% cost savings modeled, quality UNKNOWN (Exp 68)
 
 ### Longer-Term (design-stage / protocol-only)
 

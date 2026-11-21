@@ -311,8 +311,20 @@ echo "── Experiment 67: Branch Review ──"
 python3 experiments/67_branch_review/run.py
 echo ""
 
+echo "── Experiment 68: Token Policy ──"
+python3 experiments/68_token_policy/run.py
+echo ""
+
+echo "── Experiment 69: Done Test Count ──"
+python3 experiments/69_done_test_count/run.py
+echo ""
+
+echo "── Experiment 70: Shared Repo Map ──"
+python3 experiments/70_shared_repo_map/run.py
+echo ""
+
 echo "=============================================="
-echo "All 67 experiments complete. See results.json"
+echo "All 70 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
