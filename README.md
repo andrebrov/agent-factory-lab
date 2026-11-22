@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (70 experiments)
+## Headline Results (73 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -78,6 +78,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | Token policy (session+model+scouts) | 59% input, **79% cost** reduction (quality unknown) | Modeled (no LLM calls) |
 | **Done-needs-test-count gate** | **8/8 incomplete caught**, 1 false reject | Measured (16 reports) |
 | **Shared repo map (real reads)** | **33% savings**, lanes still read needed files | Measured (tiktoken) |
+| **Idle-leak flag** | **100% accuracy** (20 turns), 69% token waste in leaks | Measured flag + modeled waste |
+| Per-role tool budget | **23% fair savings** including on-demand overhead | Measured tokens, estimated overhead |
+| Map + who's-working pane | **23% savings** (real reads), 3/3 overlap detection | Measured (tiktoken) |
 
 ## Quick Start
 
@@ -93,7 +96,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          70 research findings (markdown, sourced from X + GitHub)
+findings/                          73 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -166,8 +169,11 @@ experiments/
   68_token_policy/                 Token policy for workers (modeled, no LLM)
   69_done_test_count/              Done-needs-test-count gate (measured)
   70_shared_repo_map/              Shared repo map with real file reads (measured)
+  71_no_nested_waits/              Idle-leak flag + nested-bg detection (measured)
+  72_role_tool_budget/             Per-role tool loading with on-demand cost (measured)
+  73_map_whos_working/             Repo map + overlap detection pane (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 70 experiments end-to-end
+run_all.sh                         Run all 73 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

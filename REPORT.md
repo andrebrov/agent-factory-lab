@@ -8,17 +8,17 @@
 
 ## Overview
 
-Seventy research findings about coding-agent improvements were collected
-from X and GitHub (in eighteen batches), documented in `findings/`, and tested
-via runnable experiments. **Fifty-one experiments produce real measurements**
+Seventy-three research findings about coding-agent improvements were collected
+from X and GitHub (in nineteen batches), documented in `findings/`, and tested
+via runnable experiments. **Fifty-three experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
 proof-of-done gates, cross-agent review, pane restart, mistake-to-rule,
 hardened judge, token controller, ownership cards, handoff-vs-compact,
 watcher gates, plan gates, untrusted repo gates, needs-you views, inboxes,
-branch review, done-test-count gates, shared repo maps); nineteen use
-simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+branch review, done-test-count gates, shared repo maps, idle-leak flags,
+role tool budgets, overlap detection); twenty use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1794,6 +1794,94 @@ helps the lane that needs only 1 file. Sample: 3 lanes, 3 files, 5 tasks.
 
 ---
 
+## Nov 22 Digest Experiments (Findings 71–73)
+
+### Experiment 71: No Nested Background Waits
+
+**Finding:** Flag turns with >200K cached input and <20 output tokens (idle-
+wait leak), and flag nested background subagent waits.
+
+**Method:** Flag logic on 20 labeled turns (written before rules).
+**Status: idle-leak flag MEASURED; nested-bg flag uses labeled field (not
+runtime detection); token waste MODELED**
+
+| Flag | Accuracy | Precision | Recall | FP | FN |
+|---|---|---|---|---|---|
+| Idle-leak (>200K in, <20 out) | **100%** (20/20) | 100% | 100% | 0 | 0 |
+| Nested background | **100%** (20/20) | 100% | 100% | 0 | 0 |
+
+Idle-leak turns contain 69% of all tokens in the sample. Preventing them
+would save that fraction.
+
+**Caveat:** The nested-bg flag uses a labeled boolean field on the turn data,
+not runtime process-tree detection — real deployment would need to actually
+detect nested subagent → background job chains. The 100% accuracy on 20
+turns doesn't mean the flag is 100% accurate in production. The idle-leak
+threshold (200K/20) is a hand-picked pair; different values would shift
+precision/recall.
+
+---
+
+### Experiment 72: Per-Role Tool Budget
+
+**Finding:** Load only the MCP servers each role needs; load the rest on
+demand. FAIRLY counts on-demand overhead.
+
+**Method:** Real tiktoken on 8 MCP server definitions; 80-token on-demand
+overhead ESTIMATED (not measured against a real MCP discovery flow).
+**Status: tool tokens MEASURED; on-demand overhead ESTIMATED**
+
+| Role | All Upfront | With On-Demand | Fair Savings |
+|---|---|---|---|
+| writer | 356 | 291 | 18.3% |
+| reviewer | 356 | 258 | 27.5% |
+| deployer | 356 | 308 | 13.5% |
+| researcher | 356 | 238 | 33.1% |
+| **Average** | **356** | **274** | **23.1%** |
+
+The savings include the on-demand discovery cost (80 tokens) AND the full
+load of might-need servers when actually used. Only servers the role never
+uses are genuinely saved.
+
+**Caveat:** The 80-token on-demand overhead is estimated, not measured
+against a real MCP search/describe/load flow. If real discovery costs more,
+the savings shrink. The tool definitions are representative but small
+(356 tokens total); real MCP servers may have longer descriptions. Sample:
+4 roles, 8 servers, 30 tools.
+
+---
+
+### Experiment 73: Repo Map + "Who's Working Here" Pane
+
+**Finding:** Shared repo map + a status pane showing which agents edit which
+files. Both baseline and treatment include real file-content reads.
+
+**Method:** Real tiktoken on actual file contents, map, and status pane.
+Overlap detection logic on labeled agents.
+**Status: MEASURED (tiktoken + overlap logic)**
+
+| Metric | Baseline | Treatment |
+|---|---|---|
+| Total tokens (4 lanes) | 8,352 | 6,448 |
+| **Savings** | — | **22.8%** |
+| Map + status overhead | 0 | 323 |
+| Overlapping edits caught | 0 | 1 (A+B both edit mathlib.py) |
+| Overlap accuracy | n/a | **3/3** (100%) |
+
+The reviewer lane (needs all 3 files) costs MORE with the treatment
+(2,411 vs 2,088) because it reads all files PLUS the map/status overhead.
+The savings come entirely from lanes A and B (need only 1 file each,
+skip 2).
+
+**Caveat:** 3 files is tiny; a lane needing all files gets negative savings
+(pays map+status overhead for no benefit). The 22.8% is an honest average
+across a mix of focused and broad lanes. On a larger codebase with more files
+and more focused lanes, savings would be larger. On a codebase where every
+lane needs every file, savings would be zero or negative. Sample: 4 agents,
+3 files, 4 tasks, 3 overlap scenarios.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1848,6 +1936,8 @@ helps the lane that needs only 1 file. Sample: 3 lanes, 3 files, 5 tasks.
 48. **Agent inbox** — 7/7 surfaced, 0 missed, blocking-first sorting (Exp 65)
 49. **Done-needs-test-count gate** — 8/8 incomplete caught, 1 false reject (Exp 69)
 50. **Shared repo map (with real reads)** — 33% savings, includes actual file reads (Exp 70)
+51. **Done-test-count gate** — 8/8 catches, 1 false reject (Exp 69)
+52. **Idle-leak flag** — 100% on 20 labeled turns, 69% of sample tokens wasted (Exp 71)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -1869,6 +1959,8 @@ helps the lane that needs only 1 file. Sample: 3 lanes, 3 files, 5 tasks.
 29. **Token budget per worker** — 90% savings with shared summary (Exp 66, modeled concurrency)
 30. **Whole-branch review** — 2/2 bugs caught, 0 false flags, rule-based (Exp 67)
 31. **Token policy (session-clear + cheap model + scouts)** — 79% cost savings modeled, quality UNKNOWN (Exp 68)
+32. **Per-role tool budget** — 23% fair savings including on-demand overhead (Exp 72)
+33. **Repo map + who's-working pane** — 23% savings with real reads, 3/3 overlap detection (Exp 73)
 
 ### Longer-Term (design-stage / protocol-only)
 

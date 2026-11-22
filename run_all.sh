@@ -323,8 +323,20 @@ echo "── Experiment 70: Shared Repo Map ──"
 python3 experiments/70_shared_repo_map/run.py
 echo ""
 
+echo "── Experiment 71: No Nested Waits ──"
+python3 experiments/71_no_nested_waits/run.py
+echo ""
+
+echo "── Experiment 72: Role Tool Budget ──"
+python3 experiments/72_role_tool_budget/run.py
+echo ""
+
+echo "── Experiment 73: Map + Who's Working ──"
+python3 experiments/73_map_whos_working/run.py
+echo ""
+
 echo "=============================================="
-echo "All 70 experiments complete. See results.json"
+echo "All 73 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

@@ -1,10 +1,10 @@
 # Agent Factory Lab
 
-> Open research lab with 70 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
+> Open research lab with 73 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
 
 This site documents research findings and experiment results for improving two AI coding agents: Gwaihir (orchestrator for herdr, a multi-agent coding tool) and Landroval (orchestrator for Rex, a coding factory).
 
-## Key Results (51 real measurements, 19 simulated/estimated)
+## Key Results (53 real measurements, 20 simulated/estimated)
 
 Real measurements:
 - Batched tool calls: 94.5% token reduction, 90% fewer requests (tiktoken)
@@ -65,6 +65,9 @@ Additional real measurements (batch 3 — sandboxing):
 - Branch review: 2/2 buggy branches caught, 0/2 false flags, 642 tokens total (rule-based reviewer, not LLM)
 - Done-needs-test-count gate: 8/8 incomplete caught, 1 false reject, 15/16 accuracy (16 labeled reports, written independently of gate)
 - Shared repo map (with real reads): 32.6% savings (10,440→7,034 tokens), lanes read actual file content not just names (corrects exp 66; tiktoken)
+- Idle-leak flag: 100% accuracy on 20 labeled turns (>200K cached, <20 output), 69% of sample tokens in leak turns (flag measured, waste modeled)
+- Per-role tool budget: 23.1% fair savings across 4 roles, includes on-demand discovery overhead (tiktoken; on-demand overhead estimated at 80 tok/server)
+- Map + who's-working pane: 22.8% savings with real file reads, 3/3 overlap detection; reviewer lane costs MORE with the map (needs all files + overhead) (tiktoken)
 
 Simulated/estimated:
 - Token policy: 59% input reduction, 79% cost reduction (Haiku for coding, Opus for planning, scout subagents); quality impact UNKNOWN — no real LLM calls
