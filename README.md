@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (73 experiments)
+## Headline Results (76 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -81,6 +81,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Idle-leak flag** | **100% accuracy** (20 turns), 69% token waste in leaks | Measured flag + modeled waste |
 | Per-role tool budget | **23% fair savings** including on-demand overhead | Measured tokens, estimated overhead |
 | Map + who's-working pane | **23% savings** (real reads), 3/3 overlap detection | Measured (tiktoken) |
+| **Regression gate** | **12/12** (regression+file-read+escalation rules) | Measured pytest + deterministic rules |
+| Compact 400K vs 967K | **52% input savings** (modeled), quality untested | Modeled |
+| **Lane safety** | **12/12** (locks+credentials+status), stale detected | Measured filesystem + labeled states |
 
 ## Quick Start
 
@@ -96,7 +99,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          73 research findings (markdown, sourced from X + GitHub)
+findings/                          76 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -172,8 +175,11 @@ experiments/
   71_no_nested_waits/              Idle-leak flag + nested-bg detection (measured)
   72_role_tool_budget/             Per-role tool loading with on-demand cost (measured)
   73_map_whos_working/             Repo map + overlap detection pane (measured)
+  74_regression_gate/              Regression + file-read + escalation rules (measured)
+  75_cache_hygiene/                Prefix stability + compaction cost (measured + modeled)
+  76_lane_safety/                  Worktree locks + credentials + status (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 73 experiments end-to-end
+run_all.sh                         Run all 76 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

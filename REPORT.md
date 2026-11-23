@@ -8,9 +8,9 @@
 
 ## Overview
 
-Seventy-three research findings about coding-agent improvements were collected
-from X and GitHub (in nineteen batches), documented in `findings/`, and tested
-via runnable experiments. **Fifty-three experiments produce real measurements**
+Seventy-six research findings about coding-agent improvements were collected
+from X and GitHub (in twenty batches), documented in `findings/`, and tested
+via runnable experiments. **Fifty-five experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
@@ -18,7 +18,8 @@ proof-of-done gates, cross-agent review, pane restart, mistake-to-rule,
 hardened judge, token controller, ownership cards, handoff-vs-compact,
 watcher gates, plan gates, untrusted repo gates, needs-you views, inboxes,
 branch review, done-test-count gates, shared repo maps, idle-leak flags,
-role tool budgets, overlap detection); twenty use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+role tool budgets, overlap detection, regression gates, worktree locks);
+twenty-one use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1882,6 +1883,101 @@ lane needs every file, savings would be zero or negative. Sample: 4 agents,
 
 ---
 
+## Nov 23 Digest Experiments (Findings 74–76)
+
+### Experiment 74: Regression Gate with Full-Read Check
+
+**All gates are deterministic rules, not LLM review.** This does NOT test
+whether a real model reviewer would catch these issues — only whether the
+deterministic gates work correctly on the crafted cases.
+
+**Method:** Real pytest for regression detection; set-comparison and
+path/content rules for file-read and escalation checks. Cases constructed
+before gate rules.
+**Status: regression gate MEASURED (pytest); file-read and escalation checks
+are DETERMINISTIC RULES**
+
+| Component | Correct | Total | Type |
+|---|---|---|---|
+| Regression gate | **3/3** | 3 | real pytest (before/after suite) |
+| File-read report | **4/4** | 4 | set-comparison rule |
+| Escalation rule | **5/5** | 5 | path + content rule |
+| **Total** | **12/12** | 12 | — |
+
+The regression gate caught a breaking change (factorial bug introduced)
+while passing a clean docstring change and a new-test addition. The
+escalation rule caught CI workflow changes, package.json postinstall hooks,
+and husky hooks while passing normal source and doc changes.
+
+**Caveat:** 12 hand-crafted cases. The escalation rule is a path/content
+pattern match — it catches file types, not intent. A malicious change that
+doesn't modify CI files or install hooks would not be escalated. The
+regression gate requires the full suite to run, which adds latency.
+
+---
+
+### Experiment 75: Cache and Compaction Hygiene
+
+**Method:** Byte-comparison for prefix stability (mechanistic test).
+Cache-hit rates modeled on a synthetic 15-turn trace. Compaction cost
+modeled at 400K vs 967K thresholds.
+**Status: prefix stability MEASURED; cache hits MODELED; compaction cost
+MODELED; quality at 400K UNTESTED**
+
+| Prefix Variant | Stable? | Modeled Cache Hit Rate |
+|---|---|---|
+| Stable (fixed tools, no timestamp) | **Yes** (1 hash) | 18.0% |
+| Reordered tools | No (2 hashes) | 0.0% |
+| Timestamped | No (15 hashes) | 0.0% |
+
+| Compaction | Input Tokens | Compactions | Modeled Cost |
+|---|---|---|---|
+| 400K threshold | 13.1M | 3 | $39.43 |
+| 967K threshold | 27.4M | 1 | $82.32 |
+| **Savings** | **52.1%** | — | **52.1%** |
+
+The 18% hit rate for the stable variant is surprisingly low because the
+model counts the growing message history as uncached — only the fixed prefix
+portion caches. With a real provider's prompt-caching (which caches the
+longest matching prefix, not just exact match), the rate would be higher.
+
+**Caveat:** Hit rates are modeled, not measured against a real API cache.
+The 52% compaction savings assumes quality is unaffected — it is UNTESTED.
+More compactions (3 vs 1) mean more summarization calls and potential
+information loss. Sample: 15-turn trace, 60-turn compaction model.
+
+---
+
+### Experiment 76: Lane Safety in Rex
+
+**Method:** Real filesystem operations for locks and credential scoping.
+Logic on labeled states for status detection. Completion sound stubbed.
+**Status: locks and credentials MEASURED; status logic MEASURED on labeled
+states; completion sound STUBBED (not human-tested)**
+
+| Component | Pass | Total | Type |
+|---|---|---|---|
+| Worktree locks | **4/4** | 4 | real filesystem (`fcntl.flock`) |
+| Credential scoping | **3/3** | 3 | real file permissions |
+| Status detection | **5/5** | 5 | logic on labeled states |
+| Completion sound | stub | — | not tested |
+| **Total** | **12/12** | 12 | — |
+
+The worktree lock correctly blocks concurrent access and allows cleanup
+after release. Credential scoping isolates lanes from each other and the
+parent (separate directories with 0600 permissions). Status detection
+catches a stale/crashed session (300s heartbeat threshold) while correctly
+identifying idle, working, and waiting states.
+
+**Caveat:** The credential isolation test uses separate directories with
+file permissions — this is not a security boundary (a process running as
+the same user could still read the files). Real credential scoping would
+need process-level isolation (containers, namespaces). The stale detection
+threshold (300s) is arbitrary. The completion sound was not tested with a
+human. Sample: 2 lock scenarios, 3 credential tests, 5 status states.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -1938,6 +2034,10 @@ lane needs every file, savings would be zero or negative. Sample: 4 agents,
 50. **Shared repo map (with real reads)** — 33% savings, includes actual file reads (Exp 70)
 51. **Done-test-count gate** — 8/8 catches, 1 false reject (Exp 69)
 52. **Idle-leak flag** — 100% on 20 labeled turns, 69% of sample tokens wasted (Exp 71)
+53. **Regression gate** — 12/12 (regression+file-read+escalation), deterministic rules (Exp 74)
+54. **Lane worktree locks** — 4/4, real filesystem flock (Exp 76)
+55. **Lane credential scoping** — 3/3, file-permission isolation (Exp 76)
+56. **Lane status detection** — 5/5 including stale/crash case (Exp 76)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -1961,6 +2061,8 @@ lane needs every file, savings would be zero or negative. Sample: 4 agents,
 31. **Token policy (session-clear + cheap model + scouts)** — 79% cost savings modeled, quality UNKNOWN (Exp 68)
 32. **Per-role tool budget** — 23% fair savings including on-demand overhead (Exp 72)
 33. **Repo map + who's-working pane** — 23% savings with real reads, 3/3 overlap detection (Exp 73)
+34. **Compact at 400K vs 967K** — 52% input savings (modeled), quality UNTESTED (Exp 75)
+35. **Stable prompt prefix** — reordered tools and timestamps break cache (measured byte comparison, Exp 75)
 
 ### Longer-Term (design-stage / protocol-only)
 

@@ -1,10 +1,10 @@
 # Agent Factory Lab
 
-> Open research lab with 73 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
+> Open research lab with 76 experiments testing techniques to make AI coding agents faster, cheaper, and more reliable.
 
 This site documents research findings and experiment results for improving two AI coding agents: Gwaihir (orchestrator for herdr, a multi-agent coding tool) and Landroval (orchestrator for Rex, a coding factory).
 
-## Key Results (53 real measurements, 20 simulated/estimated)
+## Key Results (55 real measurements, 21 simulated/estimated)
 
 Real measurements:
 - Batched tool calls: 94.5% token reduction, 90% fewer requests (tiktoken)
@@ -68,8 +68,11 @@ Additional real measurements (batch 3 — sandboxing):
 - Idle-leak flag: 100% accuracy on 20 labeled turns (>200K cached, <20 output), 69% of sample tokens in leak turns (flag measured, waste modeled)
 - Per-role tool budget: 23.1% fair savings across 4 roles, includes on-demand discovery overhead (tiktoken; on-demand overhead estimated at 80 tok/server)
 - Map + who's-working pane: 22.8% savings with real file reads, 3/3 overlap detection; reviewer lane costs MORE with the map (needs all files + overhead) (tiktoken)
+- Regression gate: 12/12 (3/3 regression via real pytest, 4/4 file-read report, 5/5 escalation rule; all deterministic, not LLM review)
+- Lane safety: 12/12 (4/4 worktree locks via real flock, 3/3 credential scoping via file permissions, 5/5 status detection including stale/crash; completion sound stubbed)
 
 Simulated/estimated:
+- Cache hygiene: stable prefix caches (measured byte comparison), reordered/timestamped break cache; 400K compaction saves 52% vs 967K (modeled, quality untested)
 - Token policy: 59% input reduction, 79% cost reduction (Haiku for coding, Opus for planning, scout subagents); quality impact UNKNOWN — no real LLM calls
 - Token budget per worker: 90% savings with shared summary vs parallel duplication (tiktoken sizes measured, concurrency modeled)
 - Cache-hit tracking + prompt ordering: stable-first 91.2% cache rate / 82.1% savings, mixed 8.8%, changing-first 0% (modeled, tiktoken sizes measured)

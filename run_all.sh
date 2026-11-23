@@ -335,8 +335,20 @@ echo "── Experiment 73: Map + Who's Working ──"
 python3 experiments/73_map_whos_working/run.py
 echo ""
 
+echo "── Experiment 74: Regression Gate ──"
+python3 experiments/74_regression_gate/run.py
+echo ""
+
+echo "── Experiment 75: Cache Hygiene ──"
+python3 experiments/75_cache_hygiene/run.py
+echo ""
+
+echo "── Experiment 76: Lane Safety ──"
+python3 experiments/76_lane_safety/run.py
+echo ""
+
 echo "=============================================="
-echo "All 73 experiments complete. See results.json"
+echo "All 76 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
