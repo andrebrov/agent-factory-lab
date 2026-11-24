@@ -8,9 +8,9 @@
 
 ## Overview
 
-Seventy-six research findings about coding-agent improvements were collected
-from X and GitHub (in twenty batches), documented in `findings/`, and tested
-via runnable experiments. **Fifty-five experiments produce real measurements**
+Seventy-nine research findings about coding-agent improvements were collected
+from X and GitHub (in twenty-one batches), documented in `findings/`, and tested
+via runnable experiments. **Fifty-six experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
@@ -18,8 +18,9 @@ proof-of-done gates, cross-agent review, pane restart, mistake-to-rule,
 hardened judge, token controller, ownership cards, handoff-vs-compact,
 watcher gates, plan gates, untrusted repo gates, needs-you views, inboxes,
 branch review, done-test-count gates, shared repo maps, idle-leak flags,
-role tool budgets, overlap detection, regression gates, worktree locks);
-twenty-one use simulated or estimated data (Monte Carlo, cost modeling, protocol-only,
+role tool budgets, overlap detection, regression gates, worktree locks, lead-helper plans, PR cost loggers);
+twenty-two use simulated or estimated data (one experiment — 79, harness
+A/B — could not run) (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -1978,6 +1979,83 @@ human. Sample: 2 lock scenarios, 3 credential tests, 5 status states.
 
 ---
 
+## Nov 24 Digest Experiments (Findings 77–79)
+
+### Experiment 77: Lead-Owned Helpers with File-Ownership Plan
+
+**Method:** Real git fixture for conflict testing; rule-based plan
+enforcement and parallel-work detection; routing check on messages.
+**Status: git MEASURED; plan/parallel/routing RULE-BASED; idle panes NOT
+MEASURABLE (no live herdr)**
+
+| Component | Correct | Total | Type |
+|---|---|---|---|
+| Conflict rate (git) | 2/2 | 2 | real git |
+| Plan enforcement | **6/6** | 6 | rule (file-assignment) |
+| Parallel-work detection | **5/5** | 5 | rule (import-dependency) |
+| Helper-to-lead routing | **4/4** | 4 | routing rule |
+| Idle panes | n/a | — | not measurable |
+| **Total** | **17/17** | 17 | — |
+
+**Important honest result:** The uncoordinated baseline (two helpers both
+editing mathlib.py) did NOT produce a git conflict because the edits touched
+different functions and git auto-merged successfully. This means the
+conflict-prevention value of the plan is **not demonstrated** by this
+fixture — both the plan and no-plan cases succeeded. A tighter fixture
+(edits to the same function) would be needed to show the plan's value.
+
+**Caveat:** Plan enforcement and parallel-work detection are rules, not
+model behavior. Idle-pane counts could not be measured without a live herdr
+session — do not invent a percentage from a script. The git fixture is too
+small (2 edits to different functions in one file) to demonstrate real
+conflict prevention. Sample: 1 repo, 3 helpers, 6 enforcement cases, 5
+parallel-work cases, 4 routing cases.
+
+---
+
+### Experiment 78: Cost per Merged PR + Cheaper Scouts
+
+**Method:** Logger tested on 5 synthetic PR traces (written before the
+logger) with known call counts including retries and nested subagents.
+Routing savings modeled from public pricing.
+**Status: logger MEASURED; routing MODELED; scout quality UNTESTED**
+
+| Metric | Value |
+|---|---|
+| Logger accuracy | **5/5 PRs**, all 34 calls counted (8 retries, 10 scouts) |
+| Weekly top-5 view | Correctly ranked by cost |
+| All-Opus cost (5 PRs) | $4.96 |
+| Routed cost (scouts→Haiku) | $4.34 |
+| **Routing savings** | **12.6%** |
+| Scout tokens | 23,650 (14.5% of total 162,550) |
+
+This is NOT a recycled version of exp 2's 21% figure. The 12.6% savings
+differ because scouts are 14.5% of total tokens (vs exp 2's 28%
+control-plane share), and scouts do lighter work (grep, test runs).
+
+**Caveat:** Scout quality on Haiku is untested — a cheaper model running
+grep is likely fine, but running test interpretation might be worse. Token
+volumes are realistic (162,550 total across 5 PRs with retries), not a
+toy prompt. The traces are synthetic but include the complexity patterns
+(retries, nested subagents) that a real PR logger must handle.
+
+---
+
+### Experiment 79: Harness A/B — Rex vs herdr + Claude Code
+
+**STATUS: COULD NOT RUN.**
+
+Neither Rex nor herdr is installed on this VM. No Claude CLI. No API keys.
+Building a toy stand-in and reporting its numbers as evidence about real
+Rex vs herdr would be dishonest.
+
+The claimed ~5x harness cost gap (Artificial Analysis) is **neither confirmed
+nor refuted** by this experiment. To run it properly: install both harnesses,
+use the same model, run 10+ coding tasks on each, and compare pass rate,
+tokens (including retries and subagents), and wall time.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -2038,6 +2116,7 @@ human. Sample: 2 lock scenarios, 3 credential tests, 5 status states.
 54. **Lane worktree locks** — 4/4, real filesystem flock (Exp 76)
 55. **Lane credential scoping** — 3/3, file-permission isolation (Exp 76)
 56. **Lane status detection** — 5/5 including stale/crash case (Exp 76)
+57. **PR cost logger** — counts all 34 calls including retries/scouts (Exp 78)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -2063,6 +2142,8 @@ human. Sample: 2 lock scenarios, 3 credential tests, 5 status states.
 33. **Repo map + who's-working pane** — 23% savings with real reads, 3/3 overlap detection (Exp 73)
 34. **Compact at 400K vs 967K** — 52% input savings (modeled), quality UNTESTED (Exp 75)
 35. **Stable prompt prefix** — reordered tools and timestamps break cache (measured byte comparison, Exp 75)
+36. **Lead-helper file plan** — 17/17 rules pass, but git fixture didn't produce a conflict to prevent (Exp 77)
+37. **Scout routing** — 12.6% modeled savings (scouts→Haiku), quality untested (Exp 78)
 
 ### Longer-Term (design-stage / protocol-only)
 

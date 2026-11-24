@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (76 experiments)
+## Headline Results (79 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -84,6 +84,10 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **Regression gate** | **12/12** (regression+file-read+escalation rules) | Measured pytest + deterministic rules |
 | Compact 400K vs 967K | **52% input savings** (modeled), quality untested | Modeled |
 | **Lane safety** | **12/12** (locks+credentials+status), stale detected | Measured filesystem + labeled states |
+| Lead-helper plan | **17/17** rules pass, git fixture did NOT conflict | Rule-based + real git |
+| **PR cost logger** | **34/34 calls** counted including 8 retries, 10 scouts | Measured on synthetic traces |
+| Scout routing | **12.6% savings** (scouts→Haiku), quality untested | Modeled (public pricing) |
+| Harness A/B | **COULD NOT RUN** (no Rex/herdr/Claude on VM) | Not run |
 
 ## Quick Start
 
@@ -99,7 +103,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          76 research findings (markdown, sourced from X + GitHub)
+findings/                          79 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -178,8 +182,11 @@ experiments/
   74_regression_gate/              Regression + file-read + escalation rules (measured)
   75_cache_hygiene/                Prefix stability + compaction cost (measured + modeled)
   76_lane_safety/                  Worktree locks + credentials + status (measured)
+  77_lead_helpers/                 Lead-owned helpers with file plan (rule-based + git)
+  78_cost_per_pr/                  PR cost logger + scout routing (measured + modeled)
+  79_harness_ab/                   Harness A/B: COULD NOT RUN (no Rex/herdr)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 76 experiments end-to-end
+run_all.sh                         Run all 79 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

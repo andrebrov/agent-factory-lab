@@ -347,8 +347,20 @@ echo "── Experiment 76: Lane Safety ──"
 python3 experiments/76_lane_safety/run.py
 echo ""
 
+echo "── Experiment 77: Lead Helpers ──"
+python3 experiments/77_lead_helpers/run.py
+echo ""
+
+echo "── Experiment 78: Cost per PR ──"
+python3 experiments/78_cost_per_pr/run.py
+echo ""
+
+echo "── Experiment 79: Harness A/B ──"
+python3 experiments/79_harness_ab/run.py
+echo ""
+
 echo "=============================================="
-echo "All 76 experiments complete. See results.json"
+echo "All 79 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
