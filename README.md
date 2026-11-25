@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (79 experiments)
+## Headline Results (82 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -88,6 +88,10 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | **PR cost logger** | **34/34 calls** counted including 8 retries, 10 scouts | Measured on synthetic traces |
 | Scout routing | **12.6% savings** (scouts→Haiku), quality untested | Modeled (public pricing) |
 | Harness A/B | **COULD NOT RUN** (no Rex/herdr/Claude on VM) | Not run |
+| Tests-must-fail gate | **3/3 weak caught**, 2 false flags (design limitation) | Measured (git+pytest) |
+| Repo map (24-file fixture) | **94% fewer reads**, 23% fewer tokens (scripted) | Measured (tiktoken) |
+| **Text sanitizer** | **12/12** correct, 0 wrongly stripped | Measured |
+| **AGENTS.md hook** | **10/10** on 4 regex rules, 0 FP | Measured |
 
 ## Quick Start
 
@@ -103,7 +107,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          79 research findings (markdown, sourced from X + GitHub)
+findings/                          82 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -185,8 +189,11 @@ experiments/
   77_lead_helpers/                 Lead-owned helpers with file plan (rule-based + git)
   78_cost_per_pr/                  PR cost logger + scout routing (measured + modeled)
   79_harness_ab/                   Harness A/B: COULD NOT RUN (no Rex/herdr)
+  80_tests_must_fail/              Tests-must-fail gate (measured, design limitation)
+  81_repo_map_large/               Repo map on 24-file fixture (measured, scripted)
+  82_clean_untrusted/              Text sanitizer + AGENTS.md hook (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 79 experiments end-to-end
+run_all.sh                         Run all 82 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

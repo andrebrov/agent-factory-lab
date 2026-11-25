@@ -359,8 +359,20 @@ echo "── Experiment 79: Harness A/B ──"
 python3 experiments/79_harness_ab/run.py
 echo ""
 
+echo "── Experiment 80: Tests Must Fail ──"
+python3 experiments/80_tests_must_fail/run.py
+echo ""
+
+echo "── Experiment 81: Repo Map Large ──"
+python3 experiments/81_repo_map_large/run.py
+echo ""
+
+echo "── Experiment 82: Clean Untrusted ──"
+python3 experiments/82_clean_untrusted/run.py
+echo ""
+
 echo "=============================================="
-echo "All 79 experiments complete. See results.json"
+echo "All 82 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
