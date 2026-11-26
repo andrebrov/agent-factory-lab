@@ -7,6 +7,8 @@ on:
       - 'docs/**'
       - 'REPORT.md'
       - 'README.md'
+      - 'scripts/build_docs.py'
+      - 'findings/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -27,6 +29,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Rebuild docs from REPORT.md
+        run: python3 scripts/build_docs.py
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

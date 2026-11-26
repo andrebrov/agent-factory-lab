@@ -388,3 +388,8 @@ echo "All 85 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
+
+# Rebuild docs/ from REPORT.md so the site stays in sync
+echo ""
+echo "Rebuilding docs/ from REPORT.md..."
+python3 scripts/build_docs.py
