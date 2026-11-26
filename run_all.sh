@@ -371,8 +371,20 @@ echo "── Experiment 82: Clean Untrusted ──"
 python3 experiments/82_clean_untrusted/run.py
 echo ""
 
+echo "── Experiment 83: Rex Restart ──"
+python3 experiments/83_rex_restart/run.py
+echo ""
+
+echo "── Experiment 84: Cache Policy ──"
+python3 experiments/84_cache_policy/run.py
+echo ""
+
+echo "── Experiment 85: Modern Web Guidance ──"
+python3 experiments/85_modern_web_guidance/run.py
+echo ""
+
 echo "=============================================="
-echo "All 82 experiments complete. See results.json"
+echo "All 85 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

@@ -8,9 +8,9 @@
 
 ## Overview
 
-Eighty-two research findings about coding-agent improvements were collected
-from X and GitHub (in twenty-two batches), documented in `findings/`, and tested
-via runnable experiments. **Fifty-nine experiments produce real measurements**
+Eighty-five research findings about coding-agent improvements were collected
+from X and GitHub (in twenty-three batches), documented in `findings/`, and tested
+via runnable experiments. **Sixty experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
@@ -19,8 +19,8 @@ hardened judge, token controller, ownership cards, handoff-vs-compact,
 watcher gates, plan gates, untrusted repo gates, needs-you views, inboxes,
 branch review, done-test-count gates, shared repo maps, idle-leak flags,
 role tool budgets, overlap detection, regression gates, worktree locks, lead-helper plans, PR cost loggers,
-test-fail gates, repo maps, text sanitizers); twenty-two use simulated or
-estimated data (one experiment — 79, harness A/B — could not run) (Monte Carlo, cost modeling, protocol-only,
+test-fail gates, repo maps, text sanitizers); twenty-two use simulated or estimated data;
+three experiments (79, 83, 85-eval) could not run due to missing tools (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -2152,6 +2152,71 @@ judgment (e.g., "write clean code"). Sample: 12 text samples, 10 diff checks.
 
 ---
 
+## Nov 26 Digest Experiments (Findings 83–85)
+
+### Experiment 83: Rex Restart-Resume Drill
+
+**STATUS: COULD NOT RUN.** Rex, herdr, and Claude CLI are not installed on
+this VM (same as experiments 79). No stand-in was built.
+
+The experiment documents what OSC 7577 restart-resume is (Mitchell Hashimoto's
+announcement) and what would be needed to test it. No results.
+
+---
+
+### Experiment 84: Plan Around the 5-Minute Prompt Cache
+
+**Method:** Log parser and cache policy tested against a CONSTRUCTED FIXTURE
+(20-turn session log with known timestamps and idle gaps). NOT measured
+against a real Anthropic API cache.
+**Status: FIXTURE/MODELED. Quality and real spend NOT measured.**
+
+| Policy | Cost | Hit Rate | Rewrites |
+|---|---|---|---|
+| No cache | $0.206 | 0% | 0 |
+| Default 5min | $0.087 | 80% | 3 |
+| **Extended 1hr** | **$0.059** | **95%** | **0** |
+| Compact before idle | $0.062 | 80% | 0 (3 compactions) |
+
+The 1-hour cache is cheapest in this scenario (3 idle gaps of 6 min, 10 min,
+and 30 min). It avoids all rewrites at 2x write cost. The default 5min cache
+hits 80% but rewrites 3 times after the idle gaps. The log parser correctly
+identifies all 3 idle gaps >5min.
+
+**Caveat:** These are modeled costs on a constructed 20-turn log with
+Anthropic's published pricing, NOT measurements from real API calls. Quality
+at any compaction threshold is UNTESTED. The compact-before-idle policy
+assumes the agent can predict idle gaps (unrealistic without a status signal).
+Summarization cost is not modeled.
+
+---
+
+### Experiment 85: Modern Web Guidance — Token Footprint Only
+
+**STATUS: COULD NOT RUN (eval).** No Claude Code CLI, no API keys, no
+Playwright. The eval (229 tasks, Playwright graders) cannot be run.
+
+**What was measured:** Token footprint of the guidance content (tiktoken).
+
+| Metric | Value |
+|---|---|
+| Guide files | **236** |
+| Total guide tokens | **510,207** |
+| Avg tokens per guide | 2,161 |
+| Largest guide | accessibility.md (12,059 tokens) |
+
+**Published eval results (Google's, NOT ours):**
+Claude Code (Opus 5.5): 54% → 94% (+40pp) on 229 tasks / 1,961 checks.
+We did NOT run this eval and cannot confirm or deny these numbers.
+
+**Caveat:** We measured only the token footprint. The 510K tokens cannot all
+be loaded at once — the guidance system loads relevant guides per task via
+skill search. The quality improvement (54%→94%) is Google's published result
+from their eval harness with Playwright graders. Running it requires Claude
+Code CLI, API key, Node.js, and the eval harness. Apache-2.0 + CC-BY-4.0.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -2244,6 +2309,8 @@ judgment (e.g., "write clean code"). Sample: 12 text samples, 10 diff checks.
 37. **Scout routing** — 12.6% modeled savings (scouts→Haiku), quality untested (Exp 78)
 38. **Tests-must-fail gate** — catches 3/3 weak tests but 2 false flags (can't isolate new tests in shared files, Exp 80)
 39. **Repo map on larger fixture** — 94% read reduction, 23% token reduction on 24-file fixture (scripted, not live agent, Exp 81)
+40. **1-hour cache for idle panes** — 95% hit rate, cheapest on fixture with 3 idle gaps (modeled, Exp 84)
+41. **Modern Web Guidance** — 510K tokens across 236 guides; Google reports 54%→94% (not verified, Exp 85)
 
 ### Longer-Term (design-stage / protocol-only)
 

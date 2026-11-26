@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (82 experiments)
+## Headline Results (85 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -92,6 +92,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | Repo map (24-file fixture) | **94% fewer reads**, 23% fewer tokens (scripted) | Measured (tiktoken) |
 | **Text sanitizer** | **12/12** correct, 0 wrongly stripped | Measured |
 | **AGENTS.md hook** | **10/10** on 4 regex rules, 0 FP | Measured |
+| Rex restart-resume | **COULD NOT RUN** (no Rex/herdr on VM) | Not run |
+| Cache policy (5min/1hr) | 1hr cache cheapest on fixture (95% hit, modeled) | Fixture/modeled |
+| Modern Web Guidance | **236 guides, 510K tokens** (footprint only; eval not run) | Token footprint measured |
 
 ## Quick Start
 
@@ -107,7 +110,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          82 research findings (markdown, sourced from X + GitHub)
+findings/                          85 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -192,8 +195,11 @@ experiments/
   80_tests_must_fail/              Tests-must-fail gate (measured, design limitation)
   81_repo_map_large/               Repo map on 24-file fixture (measured, scripted)
   82_clean_untrusted/              Text sanitizer + AGENTS.md hook (measured)
+  83_rex_restart/                  Rex restart-resume: COULD NOT RUN
+  84_cache_policy/                 Cache policy on constructed fixture (modeled)
+  85_modern_web_guidance/          Modern Web Guidance token footprint (measured)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 82 experiments end-to-end
+run_all.sh                         Run all 85 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 
