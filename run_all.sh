@@ -395,8 +395,12 @@ echo "── Experiment 88: Different Reviewer ──"
 python3 experiments/88_different_reviewer/run.py
 echo ""
 
+echo "── Experiment 89: CoW Worktrees ──"
+python3 experiments/89_cow_worktrees/run.py
+echo ""
+
 echo "=============================================="
-echo "All 88 experiments complete. See results.json"
+echo "All 89 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

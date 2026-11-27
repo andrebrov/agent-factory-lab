@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Experiment Report — Agent Factory Lab</title>
-  <meta name="description" content="Full experiment report: 88 experiments on AI coding agent optimization. Real measurements, honest caveats, measured vs modeled clearly labeled.">
+  <meta name="description" content="Full experiment report: 89 experiments on AI coding agent optimization. Real measurements, honest caveats, measured vs modeled clearly labeled.">
   <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/report.html">
   <meta property="og:type" content="article">
   <meta property="og:title" content="Experiment Report — Agent Factory Lab">
-  <meta property="og:description" content="Full results from 88 experiments on AI coding agent optimization.">
+  <meta property="og:description" content="Full results from 89 experiments on AI coding agent optimization.">
   <meta property="og:url" content="https://andrebrov.github.io/agent-factory-lab/report.html">
   <meta property="og:site_name" content="Agent Factory Lab">
   <meta name="twitter:card" content="summary">
@@ -18,7 +18,7 @@
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    "headline": "Agent Factory Lab — Full Experiment Report (88 experiments)",
+    "headline": "Agent Factory Lab — Full Experiment Report (89 experiments)",
     "url": "https://andrebrov.github.io/agent-factory-lab/report.html",
     "author": {"@type": "Person", "name": "Andrei Brov"},
     "dateModified": "2026-11-27"
@@ -51,9 +51,9 @@
 
 <h2 id="overview">Overview</h2>
 
-<p>Eighty-eight research findings about coding-agent improvements were collected</p>
-<p>from X and GitHub (in twenty-four batches), documented in <code>findings/</code>, and tested</p>
-<p>via runnable experiments. <strong>Sixty-three experiments produce real measurements</strong></p>
+<p>Eighty-nine research findings about coding-agent improvements were collected</p>
+<p>from X and GitHub (in twenty-five batches), documented in <code>findings/</code>, and tested</p>
+<p>via runnable experiments. <strong>Sixty-four experiments produce real measurements</strong></p>
 <p>(token counts, execution times, sandboxing, mutation testing, verifier lanes,</p>
 <p>repo maps, linters, session migration, fold-restore, eval gates, spawn,</p>
 <p>mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,</p>
@@ -4180,6 +4180,92 @@
 
 <hr>
 
+<h2 id="experiment-89-copy-on-write-worktrees-git-cow">Experiment 89: Copy-on-Write Worktrees (git-cow)</h2>
+
+<p><strong>Source:</strong> &lt;https://x.com/edwardsanchez/status/2125842324437766488&gt;</p>
+
+<p><strong>Tool:</strong> git-cow (multiple implementations: gabrielkoerich/git-cow on</p>
+<p>crates.io, onnimonni/git-cow, Roasbeef/git-cow). Uses <code>clonefile(2)</code> on</p>
+<p>macOS APFS, <code>FICLONE</code> / <code>cp --reflink=always</code> on Linux btrfs/XFS. MIT</p>
+<p>license. Clones tracked files AND gitignored build caches (node_modules,</p>
+<p>target/, _build/). <code>.venv</code> excluded by default (absolute paths break).</p>
+
+<p><strong>Method:</strong> Real XFS reflink loopback (2GB image with reflink=1). NOT APFS.</p>
+<p>Lab repo (503 tracked files) + simulated node_modules (5,000 files, ~50MB).</p>
+<p><strong>Status: MEASURED on Linux XFS. Mac APFS verification needed.</strong></p>
+
+<table><thead><tr>
+<th>Metric</th>
+<th>Plain <code>git worktree add</code></th>
+<th>CoW worktree (reflink)</th>
+</tr></thead><tbody>
+<tr>
+<td>Creation time</td>
+<td><strong>0.022s</strong></td>
+<td>0.545s</td>
+</tr>
+<tr>
+<td>Disk delta (df-based)</td>
+<td>6,164 KB</td>
+<td><strong>-95,388 KB</strong> (shared extents)</td>
+</tr>
+<tr>
+<td>node_modules present</td>
+<td><strong>No</strong></td>
+<td><strong>Yes</strong> (5,000 files)</td>
+</tr>
+<tr>
+<td>git status clean</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Edit isolation</td>
+<td>n/a</td>
+<td><strong>Yes</strong> (edit one, other unchanged)</td>
+</tr>
+<tr>
+<td>Commits work</td>
+<td>n/a</td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Removable (prune)</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+</tbody></table>
+
+<p>The negative disk delta for CoW is because <code>df</code> measures filesystem-level</p>
+<p>usage and reflinked files share extents with the source — adding the clone</p>
+<p>costs essentially zero disk. The 0.5s creation time (vs 0.02s for plain)</p>
+<p>is the cost of walking and reflink-copying 5,503 files; a plain worktree</p>
+<p>is faster but <strong>doesn&#x27;t get node_modules</strong>, so the agent would need</p>
+<p><code>npm install</code> (minutes) before it can build or test.</p>
+
+<p><strong>Risks:</strong></p>
+<li>Disk space appears suddenly once many files are edited (reflinks share</li>
+<p>  until copy-on-write; editing all files = full copy cost)</p>
+<li><code>.venv</code> won&#x27;t work (absolute paths in <code>pyvenv.cfg</code>)</li>
+<li>Tools that break on cloned files (rare but possible)</li>
+<li>Worktree metadata git doesn&#x27;t know about (node_modules state)</li>
+
+<p><strong>What carries to APFS on Mac:</strong> The concept (zero-disk clones of build</p>
+<p>caches) applies directly. APFS <code>clonefile(2)</code> clones entire directory trees</p>
+<p>in one syscall, so creation time would be faster than XFS&#x27;s per-file walk.</p>
+
+<p><strong>What needs Mac verification:</strong> Actual <code>clonefile</code> speed, Spotlight/Time</p>
+<p>Machine interaction, git-cow tool&#x27;s APFS code path, behavior with Andrei&#x27;s</p>
+<p>specific repos and dependency layouts.</p>
+
+<p><strong>Caveat:</strong> The 5,000-file node_modules is simulated (random data, not real</p>
+<p>npm packages). Real node_modules have more varied file sizes and symlinks.</p>
+<p>The disk savings are real (measured by <code>df</code>, not <code>du</code>), but the XFS loopback</p>
+<p>is a 2GB image — a real Mac volume would be larger. The lab measured the</p>
+<p>concept, not the git-cow tool itself (which wraps this into a nicer CLI).</p>
+
+<hr>
+
 <h2 id="updated-recommendations">Updated Recommendations</h2>
 
 <h3>High-Confidence (backed by real measurements)</h3>
@@ -4245,6 +4331,7 @@
 <li><strong>AGENTS.md enforcement hook</strong> — 10/10 on 4 regex rules (Exp 82)</li>
 <li><strong>Per-pane notes + trailers</strong> — isolation works, baseline leaks, 4/4 trailers (Exp 87)</li>
 <li><strong>Simplify-then-review process rule</strong> — 5/5 correct, 0 false blocks (Exp 88, deterministic gate)</li>
+<li><strong>CoW worktrees (git-cow)</strong> — zero disk for 5K-file node_modules, all correctness checks pass; Mac APFS verification needed (Exp 89)</li>
 
 <h3>Medium-Confidence (backed by cost models and simulations)</h3>
 

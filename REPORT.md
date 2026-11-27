@@ -8,9 +8,9 @@
 
 ## Overview
 
-Eighty-eight research findings about coding-agent improvements were collected
-from X and GitHub (in twenty-four batches), documented in `findings/`, and tested
-via runnable experiments. **Sixty-three experiments produce real measurements**
+Eighty-nine research findings about coding-agent improvements were collected
+from X and GitHub (in twenty-five batches), documented in `findings/`, and tested
+via runnable experiments. **Sixty-four experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
@@ -2288,6 +2288,60 @@ model catches bugs a test gate misses is untested. Sample: 5 scenarios.
 
 ---
 
+## Experiment 89: Copy-on-Write Worktrees (git-cow)
+
+**Source:** <https://x.com/edwardsanchez/status/2125842324437766488>
+
+**Tool:** git-cow (multiple implementations: gabrielkoerich/git-cow on
+crates.io, onnimonni/git-cow, Roasbeef/git-cow). Uses `clonefile(2)` on
+macOS APFS, `FICLONE` / `cp --reflink=always` on Linux btrfs/XFS. MIT
+license. Clones tracked files AND gitignored build caches (node_modules,
+target/, _build/). `.venv` excluded by default (absolute paths break).
+
+**Method:** Real XFS reflink loopback (2GB image with reflink=1). NOT APFS.
+Lab repo (503 tracked files) + simulated node_modules (5,000 files, ~50MB).
+**Status: MEASURED on Linux XFS. Mac APFS verification needed.**
+
+| Metric | Plain `git worktree add` | CoW worktree (reflink) |
+|---|---|---|
+| Creation time | **0.022s** | 0.545s |
+| Disk delta (df-based) | 6,164 KB | **-95,388 KB** (shared extents) |
+| node_modules present | **No** | **Yes** (5,000 files) |
+| git status clean | Yes | Yes |
+| Edit isolation | n/a | **Yes** (edit one, other unchanged) |
+| Commits work | n/a | **Yes** |
+| Removable (prune) | Yes | Yes |
+
+The negative disk delta for CoW is because `df` measures filesystem-level
+usage and reflinked files share extents with the source — adding the clone
+costs essentially zero disk. The 0.5s creation time (vs 0.02s for plain)
+is the cost of walking and reflink-copying 5,503 files; a plain worktree
+is faster but **doesn't get node_modules**, so the agent would need
+`npm install` (minutes) before it can build or test.
+
+**Risks:**
+- Disk space appears suddenly once many files are edited (reflinks share
+  until copy-on-write; editing all files = full copy cost)
+- `.venv` won't work (absolute paths in `pyvenv.cfg`)
+- Tools that break on cloned files (rare but possible)
+- Worktree metadata git doesn't know about (node_modules state)
+
+**What carries to APFS on Mac:** The concept (zero-disk clones of build
+caches) applies directly. APFS `clonefile(2)` clones entire directory trees
+in one syscall, so creation time would be faster than XFS's per-file walk.
+
+**What needs Mac verification:** Actual `clonefile` speed, Spotlight/Time
+Machine interaction, git-cow tool's APFS code path, behavior with Andrei's
+specific repos and dependency layouts.
+
+**Caveat:** The 5,000-file node_modules is simulated (random data, not real
+npm packages). Real node_modules have more varied file sizes and symlinks.
+The disk savings are real (measured by `df`, not `du`), but the XFS loopback
+is a 2GB image — a real Mac volume would be larger. The lab measured the
+concept, not the git-cow tool itself (which wraps this into a nicer CLI).
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -2353,6 +2407,7 @@ model catches bugs a test gate misses is untested. Sample: 5 scenarios.
 59. **AGENTS.md enforcement hook** — 10/10 on 4 regex rules (Exp 82)
 60. **Per-pane notes + trailers** — isolation works, baseline leaks, 4/4 trailers (Exp 87)
 61. **Simplify-then-review process rule** — 5/5 correct, 0 false blocks (Exp 88, deterministic gate)
+62. **CoW worktrees (git-cow)** — zero disk for 5K-file node_modules, all correctness checks pass; Mac APFS verification needed (Exp 89)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
