@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Experiment Report — Agent Factory Lab</title>
-  <meta name="description" content="Full experiment report: 85 experiments on AI coding agent optimization. Real measurements, honest caveats, measured vs modeled clearly labeled.">
+  <meta name="description" content="Full experiment report: 88 experiments on AI coding agent optimization. Real measurements, honest caveats, measured vs modeled clearly labeled.">
   <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/report.html">
   <meta property="og:type" content="article">
   <meta property="og:title" content="Experiment Report — Agent Factory Lab">
-  <meta property="og:description" content="Full results from 85 experiments on AI coding agent optimization.">
+  <meta property="og:description" content="Full results from 88 experiments on AI coding agent optimization.">
   <meta property="og:url" content="https://andrebrov.github.io/agent-factory-lab/report.html">
   <meta property="og:site_name" content="Agent Factory Lab">
   <meta name="twitter:card" content="summary">
@@ -18,10 +18,10 @@
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    "headline": "Agent Factory Lab — Full Experiment Report (85 experiments)",
+    "headline": "Agent Factory Lab — Full Experiment Report (88 experiments)",
     "url": "https://andrebrov.github.io/agent-factory-lab/report.html",
     "author": {"@type": "Person", "name": "Andrei Brov"},
-    "dateModified": "2026-11-26"
+    "dateModified": "2026-11-27"
   }
   </script>
 </head>
@@ -51,9 +51,9 @@
 
 <h2 id="overview">Overview</h2>
 
-<p>Eighty-five research findings about coding-agent improvements were collected</p>
-<p>from X and GitHub (in twenty-three batches), documented in <code>findings/</code>, and tested</p>
-<p>via runnable experiments. <strong>Sixty experiments produce real measurements</strong></p>
+<p>Eighty-eight research findings about coding-agent improvements were collected</p>
+<p>from X and GitHub (in twenty-four batches), documented in <code>findings/</code>, and tested</p>
+<p>via runnable experiments. <strong>Sixty-three experiments produce real measurements</strong></p>
 <p>(token counts, execution times, sandboxing, mutation testing, verifier lanes,</p>
 <p>repo maps, linters, session migration, fold-restore, eval gates, spawn,</p>
 <p>mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,</p>
@@ -62,8 +62,9 @@
 <p>watcher gates, plan gates, untrusted repo gates, needs-you views, inboxes,</p>
 <p>branch review, done-test-count gates, shared repo maps, idle-leak flags,</p>
 <p>role tool budgets, overlap detection, regression gates, worktree locks, lead-helper plans, PR cost loggers,</p>
-<p>test-fail gates, repo maps, text sanitizers); twenty-two use simulated or estimated data;</p>
-<p>three experiments (79, 83, 85-eval) could not run due to missing tools (Monte Carlo, cost modeling, protocol-only,</p>
+<p>test-fail gates, repo maps, text sanitizers, notes isolation, process rules); twenty-two use</p>
+<p>simulated or estimated data; three experiments (79, 83, 85-eval) could not</p>
+<p>run due to missing tools (Monte Carlo, cost modeling, protocol-only,</p>
 <p>unverified paper claims). Every number below is labeled accordingly.</p>
 
 <hr>
@@ -4066,6 +4067,119 @@
 
 <hr>
 
+<h2 id="nov-27-digest-experiments-findings-86-88">Nov 27 Digest Experiments (Findings 86–88)</h2>
+
+<h3>Experiment 86: Docs-vs-Code Rule</h3>
+
+<p><strong>Deterministic mismatch checker, NOT a real coding agent.</strong> Does not test</p>
+<p>whether a model follows the AGENTS.md rule — only that mismatches are</p>
+<p>programmatically detectable.</p>
+
+<p><strong>Method:</strong> String comparison of 8 doc/code pairs + listing verification.</p>
+<p><strong>Status: MEASURED (deterministic checker)</strong></p>
+
+<table><thead><tr>
+<th>Metric</th>
+<th>Value</th>
+</tr></thead><tbody>
+<tr>
+<td>Detection accuracy</td>
+<td><strong>8/8</strong> (5 mismatches found, 3 agreements confirmed)</td>
+</tr>
+<tr>
+<td>Listing checker</td>
+<td>Correctly identifies complete, partial, and empty reports</td>
+</tr>
+</tbody></table>
+
+<p><strong>Caveat:</strong> This tests a deterministic string-comparison checker, not whether</p>
+<p>a real model follows the rule. A model test would require real LLM calls.</p>
+<p>Sample: 8 doc/code pairs (5 disagreements, 3 agreements).</p>
+
+<hr>
+
+<h3>Experiment 87: Per-Pane Notes + Commit Trailers</h3>
+
+<p><strong>Method:</strong> Real git operations — per-pane notes files, lead-only merge to</p>
+<p>shared file, commit trailers for attribution. No live herdr session.</p>
+<p><strong>Status: MEASURED (real git)</strong></p>
+
+<table><thead><tr>
+<th>Metric</th>
+<th>Per-Pane</th>
+<th>Shared Baseline</th>
+</tr></thead><tbody>
+<tr>
+<td>Wrong fact leaked to shared</td>
+<td><strong>No</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Commit trailers</td>
+<td><strong>4/4</strong> (Agent + Prompt-Hash)</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Attribution possible</td>
+<td><strong>Yes</strong> (git log --grep)</td>
+<td>No</td>
+</tr>
+</tbody></table>
+
+<p>The wrong fact (&quot;fibonacci base case is 0&quot;) stays in helper B&#x27;s private</p>
+<p>notes and does NOT leak to shared_notes.md because the lead only merges</p>
+<p>verified facts. The shared-notes baseline leaks the wrong fact because all</p>
+<p>helpers write to the same file.</p>
+
+<p><strong>Caveat:</strong> No live herdr session was used. The test verifies the notes-merge</p>
+<p>rule and trailer convention on real git commits, but doesn&#x27;t prove agents</p>
+<p>would actually follow the protocol. Sample: 3 helpers, 1 wrong fact, 4</p>
+<p>commits.</p>
+
+<hr>
+
+<h3>Experiment 88: Different Model as Reviewer — Process Rule Only</h3>
+
+<p>**Rex not available. No second real model. NO CLAIM about whether a second</p>
+<p>model catches more bugs.** Tests only whether the process rule (task stays</p>
+<p>open until review gate passes) works. The review is a deterministic test</p>
+<p>gate. The simplify step is stubbed.</p>
+
+<p><strong>Method:</strong> Process rule enforcement on 5 scenarios with real pytest.</p>
+<p><strong>Status: MEASURED (pytest), review is DETERMINISTIC GATE, simplify STUBBED</strong></p>
+
+<table><thead><tr>
+<th>Metric</th>
+<th>Value</th>
+</tr></thead><tbody>
+<tr>
+<td>Process rule correct</td>
+<td><strong>5/5</strong></td>
+</tr>
+<tr>
+<td>Blocked until fix</td>
+<td>2 (broken_fix, incomplete_fix)</td>
+</tr>
+<tr>
+<td>Passed through</td>
+<td>3 (good_fix, extra_function, no_change)</td>
+</tr>
+<tr>
+<td>False blocks</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>False passes</td>
+<td><strong>0</strong></td>
+</tr>
+</tbody></table>
+
+<p><strong>Caveat:</strong> The review is a test gate (pytest pass/fail), not a real model</p>
+<p>review. The simplify step is stubbed (needs a real model). Whether a second</p>
+<p>model catches bugs a test gate misses is untested. Sample: 5 scenarios.</p>
+
+<hr>
+
 <h2 id="updated-recommendations">Updated Recommendations</h2>
 
 <h3>High-Confidence (backed by real measurements)</h3>
@@ -4129,6 +4243,8 @@
 <li><strong>PR cost logger</strong> — counts all 34 calls including retries/scouts (Exp 78)</li>
 <li><strong>Text sanitizer</strong> — 12/12 correct, strips hidden Unicode/HTML (Exp 82)</li>
 <li><strong>AGENTS.md enforcement hook</strong> — 10/10 on 4 regex rules (Exp 82)</li>
+<li><strong>Per-pane notes + trailers</strong> — isolation works, baseline leaks, 4/4 trailers (Exp 87)</li>
+<li><strong>Simplify-then-review process rule</strong> — 5/5 correct, 0 false blocks (Exp 88, deterministic gate)</li>
 
 <h3>Medium-Confidence (backed by cost models and simulations)</h3>
 
@@ -4160,6 +4276,7 @@
 <li><strong>Repo map on larger fixture</strong> — 94% read reduction, 23% token reduction on 24-file fixture (scripted, not live agent, Exp 81)</li>
 <li><strong>1-hour cache for idle panes</strong> — 95% hit rate, cheapest on fixture with 3 idle gaps (modeled, Exp 84)</li>
 <li><strong>Modern Web Guidance</strong> — 510K tokens across 236 guides; Google reports 54%→94% (not verified, Exp 85)</li>
+<li><strong>Docs-vs-code mismatch checker</strong> — 8/8 detection, deterministic only (Exp 86)</li>
 
 <h3>Longer-Term (design-stage / protocol-only)</h3>
 
@@ -4196,7 +4313,7 @@
 </main>
 <footer>
   <div class="container">
-    <p>Agent Factory Lab &middot; <a href="https://github.com/andrebrov/agent-factory-lab">Source on GitHub</a> &middot; Generated 2026-11-26</p>
+    <p>Agent Factory Lab &middot; <a href="https://github.com/andrebrov/agent-factory-lab">Source on GitHub</a> &middot; Generated 2026-11-27</p>
   </div>
 </footer>
 </body>

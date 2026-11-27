@@ -8,9 +8,9 @@
 
 ## Overview
 
-Eighty-five research findings about coding-agent improvements were collected
-from X and GitHub (in twenty-three batches), documented in `findings/`, and tested
-via runnable experiments. **Sixty experiments produce real measurements**
+Eighty-eight research findings about coding-agent improvements were collected
+from X and GitHub (in twenty-four batches), documented in `findings/`, and tested
+via runnable experiments. **Sixty-three experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
@@ -19,8 +19,9 @@ hardened judge, token controller, ownership cards, handoff-vs-compact,
 watcher gates, plan gates, untrusted repo gates, needs-you views, inboxes,
 branch review, done-test-count gates, shared repo maps, idle-leak flags,
 role tool budgets, overlap detection, regression gates, worktree locks, lead-helper plans, PR cost loggers,
-test-fail gates, repo maps, text sanitizers); twenty-two use simulated or estimated data;
-three experiments (79, 83, 85-eval) could not run due to missing tools (Monte Carlo, cost modeling, protocol-only,
+test-fail gates, repo maps, text sanitizers, notes isolation, process rules); twenty-two use
+simulated or estimated data; three experiments (79, 83, 85-eval) could not
+run due to missing tools (Monte Carlo, cost modeling, protocol-only,
 unverified paper claims). Every number below is labeled accordingly.
 
 ---
@@ -2217,6 +2218,76 @@ Code CLI, API key, Node.js, and the eval harness. Apache-2.0 + CC-BY-4.0.
 
 ---
 
+## Nov 27 Digest Experiments (Findings 86–88)
+
+### Experiment 86: Docs-vs-Code Rule
+
+**Deterministic mismatch checker, NOT a real coding agent.** Does not test
+whether a model follows the AGENTS.md rule — only that mismatches are
+programmatically detectable.
+
+**Method:** String comparison of 8 doc/code pairs + listing verification.
+**Status: MEASURED (deterministic checker)**
+
+| Metric | Value |
+|---|---|
+| Detection accuracy | **8/8** (5 mismatches found, 3 agreements confirmed) |
+| Listing checker | Correctly identifies complete, partial, and empty reports |
+
+**Caveat:** This tests a deterministic string-comparison checker, not whether
+a real model follows the rule. A model test would require real LLM calls.
+Sample: 8 doc/code pairs (5 disagreements, 3 agreements).
+
+---
+
+### Experiment 87: Per-Pane Notes + Commit Trailers
+
+**Method:** Real git operations — per-pane notes files, lead-only merge to
+shared file, commit trailers for attribution. No live herdr session.
+**Status: MEASURED (real git)**
+
+| Metric | Per-Pane | Shared Baseline |
+|---|---|---|
+| Wrong fact leaked to shared | **No** | **Yes** |
+| Commit trailers | **4/4** (Agent + Prompt-Hash) | None |
+| Attribution possible | **Yes** (git log --grep) | No |
+
+The wrong fact ("fibonacci base case is 0") stays in helper B's private
+notes and does NOT leak to shared_notes.md because the lead only merges
+verified facts. The shared-notes baseline leaks the wrong fact because all
+helpers write to the same file.
+
+**Caveat:** No live herdr session was used. The test verifies the notes-merge
+rule and trailer convention on real git commits, but doesn't prove agents
+would actually follow the protocol. Sample: 3 helpers, 1 wrong fact, 4
+commits.
+
+---
+
+### Experiment 88: Different Model as Reviewer — Process Rule Only
+
+**Rex not available. No second real model. NO CLAIM about whether a second
+model catches more bugs.** Tests only whether the process rule (task stays
+open until review gate passes) works. The review is a deterministic test
+gate. The simplify step is stubbed.
+
+**Method:** Process rule enforcement on 5 scenarios with real pytest.
+**Status: MEASURED (pytest), review is DETERMINISTIC GATE, simplify STUBBED**
+
+| Metric | Value |
+|---|---|
+| Process rule correct | **5/5** |
+| Blocked until fix | 2 (broken_fix, incomplete_fix) |
+| Passed through | 3 (good_fix, extra_function, no_change) |
+| False blocks | **0** |
+| False passes | **0** |
+
+**Caveat:** The review is a test gate (pytest pass/fail), not a real model
+review. The simplify step is stubbed (needs a real model). Whether a second
+model catches bugs a test gate misses is untested. Sample: 5 scenarios.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -2280,6 +2351,8 @@ Code CLI, API key, Node.js, and the eval harness. Apache-2.0 + CC-BY-4.0.
 57. **PR cost logger** — counts all 34 calls including retries/scouts (Exp 78)
 58. **Text sanitizer** — 12/12 correct, strips hidden Unicode/HTML (Exp 82)
 59. **AGENTS.md enforcement hook** — 10/10 on 4 regex rules (Exp 82)
+60. **Per-pane notes + trailers** — isolation works, baseline leaks, 4/4 trailers (Exp 87)
+61. **Simplify-then-review process rule** — 5/5 correct, 0 false blocks (Exp 88, deterministic gate)
 
 ### Medium-Confidence (backed by cost models and simulations)
 
@@ -2311,6 +2384,7 @@ Code CLI, API key, Node.js, and the eval harness. Apache-2.0 + CC-BY-4.0.
 39. **Repo map on larger fixture** — 94% read reduction, 23% token reduction on 24-file fixture (scripted, not live agent, Exp 81)
 40. **1-hour cache for idle panes** — 95% hit rate, cheapest on fixture with 3 idle gaps (modeled, Exp 84)
 41. **Modern Web Guidance** — 510K tokens across 236 guides; Google reports 54%→94% (not verified, Exp 85)
+42. **Docs-vs-code mismatch checker** — 8/8 detection, deterministic only (Exp 86)
 
 ### Longer-Term (design-stage / protocol-only)
 

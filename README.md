@@ -6,7 +6,7 @@
 
 Agent Factory Lab collects research findings on coding-agent optimization from X, turns each into a runnable experiment, and reports honest results — real measurements where possible, clearly labeled simulations where not. The lab targets two agents: **Gwaihir** (orchestrator for the [herdr](https://herdr.dev) multi-agent coding tool) and **Landroval** (orchestrator for the Rex coding factory).
 
-## Headline Results (85 experiments)
+## Headline Results (88 experiments)
 
 | Technique | Result | Measurement |
 |---|---|---|
@@ -95,6 +95,9 @@ Agent Factory Lab collects research findings on coding-agent optimization from X
 | Rex restart-resume | **COULD NOT RUN** (no Rex/herdr on VM) | Not run |
 | Cache policy (5min/1hr) | 1hr cache cheapest on fixture (95% hit, modeled) | Fixture/modeled |
 | Modern Web Guidance | **236 guides, 510K tokens** (footprint only; eval not run) | Token footprint measured |
+| Docs-vs-code checker | **8/8 detection**, deterministic (not a model test) | Measured |
+| **Per-pane notes** | Isolation works, baseline leaks, **4/4 trailers** | Measured (real git) |
+| Review process rule | **5/5 correct**, 0 false blocks (test gate, not model) | Measured (pytest) |
 
 ## Quick Start
 
@@ -110,7 +113,7 @@ Each experiment writes `results.json` and prints a human-readable summary. See t
 ## Structure
 
 ```
-findings/                          85 research findings (markdown, sourced from X + GitHub)
+findings/                          88 research findings (markdown, sourced from X + GitHub)
 experiments/
   sample_codebase/                 10-bug Python library + test suite
   01_writer_reviewer/              Monte Carlo: single-agent vs pipeline
@@ -198,8 +201,11 @@ experiments/
   83_rex_restart/                  Rex restart-resume: COULD NOT RUN
   84_cache_policy/                 Cache policy on constructed fixture (modeled)
   85_modern_web_guidance/          Modern Web Guidance token footprint (measured)
+  86_docs_vs_code/                 Docs-vs-code mismatch checker (deterministic)
+  87_pane_notes/                   Per-pane notes + commit trailers (real git)
+  88_different_reviewer/           Review process rule (test gate, not model)
 docs/                              Static site for GitHub Pages (SEO + GEO)
-run_all.sh                         Run all 85 experiments end-to-end
+run_all.sh                         Run all 88 experiments end-to-end
 REPORT.md                          Full experiment report with conclusions
 ```
 

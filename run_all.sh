@@ -383,8 +383,20 @@ echo "── Experiment 85: Modern Web Guidance ──"
 python3 experiments/85_modern_web_guidance/run.py
 echo ""
 
+echo "── Experiment 86: Docs vs Code ──"
+python3 experiments/86_docs_vs_code/run.py
+echo ""
+
+echo "── Experiment 87: Pane Notes ──"
+python3 experiments/87_pane_notes/run.py
+echo ""
+
+echo "── Experiment 88: Different Reviewer ──"
+python3 experiments/88_different_reviewer/run.py
+echo ""
+
 echo "=============================================="
-echo "All 85 experiments complete. See results.json"
+echo "All 88 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="
