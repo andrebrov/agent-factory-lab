@@ -8,9 +8,9 @@
 
 ## Overview
 
-Eighty-nine research findings about coding-agent improvements were collected
-from X and GitHub (in twenty-five batches), documented in `findings/`, and tested
-via runnable experiments. **Sixty-four experiments produce real measurements**
+Ninety-two research findings about coding-agent improvements were collected
+from X and GitHub (in twenty-six batches), documented in `findings/`, and tested
+via runnable experiments. **Sixty-seven experiments produce real measurements**
 (token counts, execution times, sandboxing, mutation testing, verifier lanes,
 repo maps, linters, session migration, fold-restore, eval gates, spawn,
 mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,
@@ -2342,6 +2342,88 @@ concept, not the git-cow tool itself (which wraps this into a nicer CLI).
 
 ---
 
+## Nov 28 Digest Experiments (Findings 90–92)
+
+### Experiment 90: Locked Acceptance Tests
+
+**Gate:** Deterministic path-based diff check (not a model). Cannot simulate
+a real Rex/herdr lane — tests only the gate.
+
+**Method:** Real git diff checking on 8 cases (4 should block, 4 should allow),
+constructed before the gate code.
+**Status: MEASURED (real git)**
+
+| Metric | Value |
+|---|---|
+| Correct | **8/8** |
+| Test-folder edits blocked | **4/4** |
+| Clean diffs allowed | **4/4** |
+| False blocks | **0** |
+| False allows | **0** |
+
+**Caveat:** This is a path-based diff check, not a model. It blocks edits to
+the locked folder but cannot judge whether the code change is correct. Real
+Rex/herdr lanes were not simulated. 8 cases on a synthetic repo.
+
+---
+
+### Experiment 91: Instruction Checklist in Done Reports
+
+**Checker:** Keyword + proximity matching (not a model). Cannot test against
+a live agent.
+
+**Method:** Checker on 10 (task, report) pairs from 3 task files. Reports
+written before the checker. **Status: MEASURED**
+
+| Metric | Value |
+|---|---|
+| Correct | **9/10** |
+| Incomplete reports caught | **4/5** |
+| False rejects | **0** |
+| False accepts | **1** (report r8: "Rate limiting added. README updated." accepted because keywords matched near status words) |
+
+The 1 false accept: report r8 says "Rate limiting added. README updated." —
+it mentions rate limiting and README but doesn't mention integration tests.
+The checker found 3/3 keywords because "added" counted as a status word for
+each. This is a keyword-matching limitation.
+
+**Caveat:** Keyword + proximity checker, not a model. Live agent behavior
+untested. 10 reports, 3 task files.
+
+---
+
+### Experiment 92: Measure Before Trimming Tokens
+
+**No API keys.** Cannot measure real billed tokens or cache hits. The
+EngineerHMS 27–38% savings claim is UNVERIFIED.
+
+**What ran:**
+- Token logger: 7/7 unit tests pass (MEASURED)
+- MCP schema overhead: role-trimming vs all-enabled (tiktoken, MEASURED)
+
+**What could not run:**
+- Real billed token measurement, real cache-hit tracking, live session
+  logging, verification of the 27–38% claim
+
+**Status: logger MEASURED, MCP overhead MEASURED (tiktoken), billing COULD
+NOT RUN**
+
+| Metric | Value |
+|---|---|
+| Logger tests | **7/7 pass** |
+| All-enabled MCP overhead | 199 tokens (6 servers, 20 tools) |
+| Avg role-trimmed savings | **71.3%** across 7 roles |
+| Smallest savings | 38.2% (writer/reviewer — use 3 of 6 servers) |
+| Largest savings | 88.9% (scout/researcher — use 1 server) |
+
+**Caveat:** The 71% average is high because most roles use only 1–2 of 6
+servers. The writer and reviewer (most common roles) save only 38% because
+they use half the servers. The all-enabled overhead (199 tokens) is small
+because these are fixture descriptors — real MCP server schemas are longer.
+Real billed token measurement could not run. The 27–38% claim is unverified.
+
+---
+
 ## Updated Recommendations
 
 ### High-Confidence (backed by real measurements)
@@ -2408,6 +2490,9 @@ concept, not the git-cow tool itself (which wraps this into a nicer CLI).
 60. **Per-pane notes + trailers** — isolation works, baseline leaks, 4/4 trailers (Exp 87)
 61. **Simplify-then-review process rule** — 5/5 correct, 0 false blocks (Exp 88, deterministic gate)
 62. **CoW worktrees (git-cow)** — zero disk for 5K-file node_modules, all correctness checks pass; Mac APFS verification needed (Exp 89)
+63. **Locked acceptance tests** — 8/8 (4 edits blocked, 4 clean allowed, 0 false), path-based gate (Exp 90)
+64. **Instruction checklist** — 9/10, 4/5 incomplete caught, 1 false accept, keyword checker (Exp 91)
+65. **Token logger** — 7/7 unit tests pass; MCP trimming saves 38–89% per role on fixtures (Exp 92)
 
 ### Medium-Confidence (backed by cost models and simulations)
 

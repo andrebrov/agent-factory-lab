@@ -399,8 +399,20 @@ echo "── Experiment 89: CoW Worktrees ──"
 python3 experiments/89_cow_worktrees/run.py
 echo ""
 
+echo "── Experiment 90: Locked Tests ──"
+python3 experiments/90_locked_tests/run.py
+echo ""
+
+echo "── Experiment 91: Instruction Checklist ──"
+python3 experiments/91_instruction_checklist/run.py
+echo ""
+
+echo "── Experiment 92: Measure Before Trim ──"
+python3 experiments/92_measure_before_trim/run.py
+echo ""
+
 echo "=============================================="
-echo "All 89 experiments complete. See results.json"
+echo "All 92 experiments complete. See results.json"
 echo "in each experiment directory and REPORT.md"
 echo "for the summary."
 echo "=============================================="

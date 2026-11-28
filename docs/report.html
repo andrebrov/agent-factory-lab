@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Experiment Report — Agent Factory Lab</title>
-  <meta name="description" content="Full experiment report: 89 experiments on AI coding agent optimization. Real measurements, honest caveats, measured vs modeled clearly labeled.">
+  <meta name="description" content="Full experiment report: 92 experiments on AI coding agent optimization. Real measurements, honest caveats, measured vs modeled clearly labeled.">
   <link rel="canonical" href="https://andrebrov.github.io/agent-factory-lab/report.html">
   <meta property="og:type" content="article">
   <meta property="og:title" content="Experiment Report — Agent Factory Lab">
-  <meta property="og:description" content="Full results from 89 experiments on AI coding agent optimization.">
+  <meta property="og:description" content="Full results from 92 experiments on AI coding agent optimization.">
   <meta property="og:url" content="https://andrebrov.github.io/agent-factory-lab/report.html">
   <meta property="og:site_name" content="Agent Factory Lab">
   <meta name="twitter:card" content="summary">
@@ -18,10 +18,10 @@
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    "headline": "Agent Factory Lab — Full Experiment Report (89 experiments)",
+    "headline": "Agent Factory Lab — Full Experiment Report (92 experiments)",
     "url": "https://andrebrov.github.io/agent-factory-lab/report.html",
     "author": {"@type": "Person", "name": "Andrei Brov"},
-    "dateModified": "2026-11-27"
+    "dateModified": "2026-11-28"
   }
   </script>
 </head>
@@ -51,9 +51,9 @@
 
 <h2 id="overview">Overview</h2>
 
-<p>Eighty-nine research findings about coding-agent improvements were collected</p>
-<p>from X and GitHub (in twenty-five batches), documented in <code>findings/</code>, and tested</p>
-<p>via runnable experiments. <strong>Sixty-four experiments produce real measurements</strong></p>
+<p>Ninety-two research findings about coding-agent improvements were collected</p>
+<p>from X and GitHub (in twenty-six batches), documented in <code>findings/</code>, and tested</p>
+<p>via runnable experiments. <strong>Sixty-seven experiments produce real measurements</strong></p>
 <p>(token counts, execution times, sandboxing, mutation testing, verifier lanes,</p>
 <p>repo maps, linters, session migration, fold-restore, eval gates, spawn,</p>
 <p>mailbox review, pane guards, blocking reviewers, discovery tokens, combined gates, staleness checkers, MCP audits, needs-human queues, dashboards,</p>
@@ -4266,6 +4266,139 @@
 
 <hr>
 
+<h2 id="nov-28-digest-experiments-findings-90-92">Nov 28 Digest Experiments (Findings 90–92)</h2>
+
+<h3>Experiment 90: Locked Acceptance Tests</h3>
+
+<p><strong>Gate:</strong> Deterministic path-based diff check (not a model). Cannot simulate</p>
+<p>a real Rex/herdr lane — tests only the gate.</p>
+
+<p><strong>Method:</strong> Real git diff checking on 8 cases (4 should block, 4 should allow),</p>
+<p>constructed before the gate code.</p>
+<p><strong>Status: MEASURED (real git)</strong></p>
+
+<table><thead><tr>
+<th>Metric</th>
+<th>Value</th>
+</tr></thead><tbody>
+<tr>
+<td>Correct</td>
+<td><strong>8/8</strong></td>
+</tr>
+<tr>
+<td>Test-folder edits blocked</td>
+<td><strong>4/4</strong></td>
+</tr>
+<tr>
+<td>Clean diffs allowed</td>
+<td><strong>4/4</strong></td>
+</tr>
+<tr>
+<td>False blocks</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>False allows</td>
+<td><strong>0</strong></td>
+</tr>
+</tbody></table>
+
+<p><strong>Caveat:</strong> This is a path-based diff check, not a model. It blocks edits to</p>
+<p>the locked folder but cannot judge whether the code change is correct. Real</p>
+<p>Rex/herdr lanes were not simulated. 8 cases on a synthetic repo.</p>
+
+<hr>
+
+<h3>Experiment 91: Instruction Checklist in Done Reports</h3>
+
+<p><strong>Checker:</strong> Keyword + proximity matching (not a model). Cannot test against</p>
+<p>a live agent.</p>
+
+<p><strong>Method:</strong> Checker on 10 (task, report) pairs from 3 task files. Reports</p>
+<p>written before the checker. <strong>Status: MEASURED</strong></p>
+
+<table><thead><tr>
+<th>Metric</th>
+<th>Value</th>
+</tr></thead><tbody>
+<tr>
+<td>Correct</td>
+<td><strong>9/10</strong></td>
+</tr>
+<tr>
+<td>Incomplete reports caught</td>
+<td><strong>4/5</strong></td>
+</tr>
+<tr>
+<td>False rejects</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>False accepts</td>
+<td><strong>1</strong> (report r8: &quot;Rate limiting added. README updated.&quot; accepted because keywords matched near status words)</td>
+</tr>
+</tbody></table>
+
+<p>The 1 false accept: report r8 says &quot;Rate limiting added. README updated.&quot; —</p>
+<p>it mentions rate limiting and README but doesn&#x27;t mention integration tests.</p>
+<p>The checker found 3/3 keywords because &quot;added&quot; counted as a status word for</p>
+<p>each. This is a keyword-matching limitation.</p>
+
+<p><strong>Caveat:</strong> Keyword + proximity checker, not a model. Live agent behavior</p>
+<p>untested. 10 reports, 3 task files.</p>
+
+<hr>
+
+<h3>Experiment 92: Measure Before Trimming Tokens</h3>
+
+<p><strong>No API keys.</strong> Cannot measure real billed tokens or cache hits. The</p>
+<p>EngineerHMS 27–38% savings claim is UNVERIFIED.</p>
+
+<p><strong>What ran:</strong></p>
+<li>Token logger: 7/7 unit tests pass (MEASURED)</li>
+<li>MCP schema overhead: role-trimming vs all-enabled (tiktoken, MEASURED)</li>
+
+<p><strong>What could not run:</strong></p>
+<li>Real billed token measurement, real cache-hit tracking, live session</li>
+<p>  logging, verification of the 27–38% claim</p>
+
+<p>**Status: logger MEASURED, MCP overhead MEASURED (tiktoken), billing COULD</p>
+<p>NOT RUN**</p>
+
+<table><thead><tr>
+<th>Metric</th>
+<th>Value</th>
+</tr></thead><tbody>
+<tr>
+<td>Logger tests</td>
+<td><strong>7/7 pass</strong></td>
+</tr>
+<tr>
+<td>All-enabled MCP overhead</td>
+<td>199 tokens (6 servers, 20 tools)</td>
+</tr>
+<tr>
+<td>Avg role-trimmed savings</td>
+<td><strong>71.3%</strong> across 7 roles</td>
+</tr>
+<tr>
+<td>Smallest savings</td>
+<td>38.2% (writer/reviewer — use 3 of 6 servers)</td>
+</tr>
+<tr>
+<td>Largest savings</td>
+<td>88.9% (scout/researcher — use 1 server)</td>
+</tr>
+</tbody></table>
+
+<p><strong>Caveat:</strong> The 71% average is high because most roles use only 1–2 of 6</p>
+<p>servers. The writer and reviewer (most common roles) save only 38% because</p>
+<p>they use half the servers. The all-enabled overhead (199 tokens) is small</p>
+<p>because these are fixture descriptors — real MCP server schemas are longer.</p>
+<p>Real billed token measurement could not run. The 27–38% claim is unverified.</p>
+
+<hr>
+
 <h2 id="updated-recommendations">Updated Recommendations</h2>
 
 <h3>High-Confidence (backed by real measurements)</h3>
@@ -4332,6 +4465,9 @@
 <li><strong>Per-pane notes + trailers</strong> — isolation works, baseline leaks, 4/4 trailers (Exp 87)</li>
 <li><strong>Simplify-then-review process rule</strong> — 5/5 correct, 0 false blocks (Exp 88, deterministic gate)</li>
 <li><strong>CoW worktrees (git-cow)</strong> — zero disk for 5K-file node_modules, all correctness checks pass; Mac APFS verification needed (Exp 89)</li>
+<li><strong>Locked acceptance tests</strong> — 8/8 (4 edits blocked, 4 clean allowed, 0 false), path-based gate (Exp 90)</li>
+<li><strong>Instruction checklist</strong> — 9/10, 4/5 incomplete caught, 1 false accept, keyword checker (Exp 91)</li>
+<li><strong>Token logger</strong> — 7/7 unit tests pass; MCP trimming saves 38–89% per role on fixtures (Exp 92)</li>
 
 <h3>Medium-Confidence (backed by cost models and simulations)</h3>
 
@@ -4400,7 +4536,7 @@
 </main>
 <footer>
   <div class="container">
-    <p>Agent Factory Lab &middot; <a href="https://github.com/andrebrov/agent-factory-lab">Source on GitHub</a> &middot; Generated 2026-11-27</p>
+    <p>Agent Factory Lab &middot; <a href="https://github.com/andrebrov/agent-factory-lab">Source on GitHub</a> &middot; Generated 2026-11-28</p>
   </div>
 </footer>
 </body>
